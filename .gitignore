@@ -18,3 +18,10 @@ desktop.ini
 
 # Unpacked documents
 板块一_unpacked/
+
+# Templates and temp files
+*.tpz
+find_*.ps1
+take_screenshot.ps1
+*_screen.png
+*_screen.png.import

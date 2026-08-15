@@ -136,6 +136,130 @@ static func export_report(session_id: String) -> Dictionary:
 	return report
 
 
+## 导出CSV格式数据（含儿童信息、各轮次明细、维度统计摘要）。
+## 返回CSV文件路径，失败返回空字符串。
+static func export_csv(session_id: String) -> String:
+	var session := load_session_results(session_id)
+	if session.is_empty():
+		push_error("[AssessmentStorage] 无法导出CSV：会话数据为空 (%s)" % session_id)
+		return ""
+	_ensure_dirs()
+	var csv_path := "%s/%s.csv" % [REPORTS_DIR, _sanitize_filename(session_id)]
+	var file := FileAccess.open(csv_path, FileAccess.WRITE)
+	if file == null:
+		push_error("[AssessmentStorage] 无法写入CSV文件: %s (错误码: %d)" % [csv_path, FileAccess.get_open_error()])
+		return ""
+
+	var lines: Array[String] = []
+
+	# --- 儿童信息 ---
+	var child_info: Dictionary = session.get("child_info", {})
+	lines.append("# 儿童信息")
+	lines.append("字段,值")
+	lines.append("昵称,%s" % _csv_escape(String(child_info.get("nickname", ""))))
+	lines.append("年龄,%d" % int(child_info.get("age", 0)))
+	lines.append("性别,%s" % _csv_escape(String(child_info.get("gender", ""))))
+	lines.append("AI类型,%s" % _csv_escape(String(child_info.get("ai_type", ""))))
+	lines.append("会话ID,%s" % _csv_escape(session_id))
+	lines.append("")
+
+	# --- 各轮次明细 ---
+	var turns: Array = session.get("turns", [])
+	lines.append("# 各轮次明细")
+	lines.append("轮次序号,说话者,文本,等级,标记词,板块,维度,时间戳")
+	for i in range(turns.size()):
+		var turn: Dictionary = turns[i] if turns[i] is Dictionary else {}
+		var speaker := String(turn.get("speaker", ""))
+		var text := String(turn.get("text", turn.get("child_input", turn.get("response", ""))))
+		var level: int = int(turn.get("level", 0))
+		var markers: Array = turn.get("markers", [])
+		var marker_str := ""
+		for j in range(markers.size()):
+			if j > 0:
+				marker_str += ","
+			marker_str += String(markers[j])
+		var section := String(turn.get("section", ""))
+		var dimension := String(turn.get("dimension", turn.get("expected_dimension", "")))
+		var timestamp := String(turn.get("timestamp", ""))
+		lines.append("%d,%s,%s,%d,%s,%s,%s,%s" % [
+			i + 1, _csv_escape(speaker), _csv_escape(text), level,
+			_csv_escape(marker_str), _csv_escape(section), _csv_escape(dimension), timestamp
+		])
+	lines.append("")
+
+	# --- 维度统计摘要 ---
+	var final_results: Dictionary = session.get("final_results", {})
+	var per_dimension: Array = final_results.get("per_dimension", [])
+	lines.append("# 核心维度统计")
+	lines.append("维度,频次,平均等级,星章")
+	for entry in per_dimension:
+		if entry is Dictionary:
+			lines.append("%s,%.4f,%.4f,%s" % [
+				_csv_escape(String(entry.get("name", ""))),
+				float(entry.get("frequency", 0.0)),
+				float(entry.get("level", 0.0)),
+				"★" if int(entry.get("star", 0)) > 0 else "—",
+			])
+	lines.append("")
+
+	# --- 扩展维度 ---
+	var extended: Array = final_results.get("extended_summary", [])
+	lines.append("# 扩展维度评估")
+	lines.append("维度,频次,等级")
+	for entry in extended:
+		if entry is Dictionary:
+			lines.append("%s,%.4f,%.4f" % [
+				_csv_escape(String(entry.get("name", ""))),
+				float(entry.get("frequency", 0.0)),
+				float(entry.get("level", 0.0)),
+			])
+	lines.append("")
+
+	# --- 等级分布 ---
+	var level_dist: Array = final_results.get("level_distribution", [])
+	var level_labels: Array[String] = ["沉默/无回应", "直白无修饰", "消极礼貌", "积极礼貌+称呼", "复合策略"]
+	lines.append("# 五级策略等级分布")
+	lines.append("等级,描述,频次")
+	for i in range(min(level_dist.size(), level_labels.size())):
+		lines.append("%d,%s,%.0f" % [i + 1, _csv_escape(level_labels[i]), float(level_dist[i])])
+	lines.append("")
+
+	# --- 汇总指标 ---
+	lines.append("# 汇总指标")
+	lines.append("指标,值")
+	lines.append("总星章,%d/%d" % [int(final_results.get("total_stars", 0)), int(final_results.get("max_stars", 6))])
+	lines.append("总分,%.4f" % float(final_results.get("overall_score", 0.0)))
+	lines.append("话轮数,%d" % int(final_results.get("turn_count", 0)))
+	lines.append("评估建议,%s" % _csv_escape(String(final_results.get("recommendation", ""))))
+
+	# 场景级统计
+	var scenario_results: Dictionary = session.get("scenario_results", {})
+	for scenario_key in scenario_results.keys():
+		var scenario: Dictionary = scenario_results[scenario_key]
+		if scenario is Dictionary and scenario.has("statistics"):
+			var stats: Dictionary = scenario.get("statistics", {})
+			lines.append("")
+			lines.append("# 场景统计: %s" % _csv_escape(scenario_key))
+			lines.append("指标,值")
+			lines.append("标记词总频次,%d" % int(stats.get("marker_total_count", 0)))
+			lines.append("每分钟频次,%.4f" % float(stats.get("marker_frequency", 0.0)))
+			lines.append("平均等级,%.4f" % float(stats.get("average_level", 0.0)))
+			lines.append("互动时长(分钟),%.4f" % float(stats.get("duration_minutes", 0.0)))
+			lines.append("话轮数,%d" % int(stats.get("turn_count", 0)))
+
+	file.store_string("\r\n".join(lines))
+	file.close()
+	print("[AssessmentStorage] CSV已导出: %s" % csv_path)
+	return csv_path
+
+
+## CSV字段转义：包含逗号、引号或换行时用双引号包裹，内部双引号翻倍。
+static func _csv_escape(value: String) -> String:
+	if value.find(",") != -1 or value.find("\"") != -1 or value.find("\n") != -1 or value.find("\r") != -1:
+		return "\"%s\"" % value.replace("\"", "\"\"")
+	return value
+
+
 # ============================================================
 # 内部辅助函数
 # ============================================================

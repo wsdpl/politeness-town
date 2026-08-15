@@ -58,6 +58,11 @@ layout_mode = 2
 custom_minimum_size = Vector2(180, 54)
 text = "🎤 说话"
 
+[node name="CancelButton" type="Button" parent="UI/InputPanel/VBox/HBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 54)
+text = "关闭"
+
 [node name="VoiceStatus" type="Label" parent="UI/InputPanel/VBox"]
 layout_mode = 2
 text = ""

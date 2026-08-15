@@ -82,6 +82,16 @@ func clear() -> void:
 	visible = false
 
 
+## 跳过当前对话：如果在打字则直接显示全文，如果已打完则推进对话。
+func skip_dialogue() -> void:
+	if not visible:
+		return
+	if _is_typing:
+		_finish_typing()
+	elif _typing_done:
+		_advance_dialogue()
+
+
 func _reset_state() -> void:
 	_is_typing = false
 	_typing_done = false

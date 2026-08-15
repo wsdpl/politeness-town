@@ -10,6 +10,7 @@ extends Node2D
 @onready var _input_field: LineEdit = $UI/InputPanel/VBox/InputField
 @onready var _send_button: Button = $UI/InputPanel/VBox/HBox/SendButton
 @onready var _mic_button: Button = $UI/InputPanel/VBox/HBox/MicButton
+@onready var _cancel_button: Button = $UI/InputPanel/VBox/HBox/CancelButton
 @onready var _voice_status: Label = $UI/InputPanel/VBox/VoiceStatus
 @onready var _level_label: Label = $UI/LevelLabel
 @onready var _progress_bar: ProgressBar = $UI/ProgressBar
@@ -81,6 +82,11 @@ var _current_level_result: Dictionary = {}
 var _last_child_text: String = ""
 var _awaiting_scoring: bool = false
 var _thank_count: int = 0  # 第三关道谢计数
+var _share_final_agreed: bool = true  # 第五关最终是否同意分享
+
+# 推进器（沉默儿童提示）
+var _prompter_timer: Timer
+var _prompter_fired: bool = false
 
 # AI 对话生成状态
 var _ai_dialogue_text: String = ""       # AI 生成的对话文本
@@ -177,7 +183,7 @@ const LEVELS := [
 			{"type": "child", "measure": "初始分享意愿"},
 			{"type": "branch_share"},
 			{"type": "child", "measure": "交换条件下灵活性"},
-			{"type": "ai", "friend": "你真好！我们一起看吧！第五关通过！", "tool": "共享授权通过。第五关完成。"},
+			{"type": "ai", "friend": "你真好！我们一起看吧！第五关通过！", "tool": "共享授权通过。第五关完成。", "friend_reject": "没关系，这本书是你的，你自己看吧！第五关也通过！", "tool_reject": "权限未授权。第五关仍判定完成。"},
 			{"type": "star"},
 		]
 	},
@@ -223,6 +229,13 @@ func _ready() -> void:
 	_dialogue_timer.timeout.connect(_on_dialogue_timeout)
 	add_child(_dialogue_timer)
 
+	# 推进器计时器（10秒无回应时触发提示）
+	_prompter_timer = Timer.new()
+	_prompter_timer.wait_time = 10.0
+	_prompter_timer.one_shot = true
+	_prompter_timer.timeout.connect(_on_prompter_timeout)
+	add_child(_prompter_timer)
+
 	# 小游戏覆盖层（layer=2，在UI之上）
 	_minigame_layer = CanvasLayer.new()
 	_minigame_layer.layer = 2
@@ -250,7 +263,9 @@ func _setup_ui() -> void:
 
 	AssessmentUiTheme.apply_primary_button(_send_button)
 	AssessmentUiTheme.apply_primary_button(_mic_button)
+	AssessmentUiTheme.apply_primary_button(_cancel_button)
 	_send_button.pressed.connect(_on_send_pressed)
+	_cancel_button.pressed.connect(_on_cancel_input)
 	_input_field.text_submitted.connect(func(_t): _on_send_pressed())
 	_input_panel.visible = false
 	_input_panel.add_theme_stylebox_override("panel", AssessmentUiTheme.dialogue_panel_style())
@@ -515,15 +530,22 @@ func _handle_ai_step(step: Dictionary) -> void:
 		_ai_dialogue_text = ""
 	else:
 		text = _get_ai_text(step)
+	# 第五关最终结束语：根据最终分享意愿选择台词
+	if _current_level == 4 and step.has("friend_reject") and not _share_final_agreed:
+		if _ai_type == AssessmentGameManager.AiType.FRIEND:
+			text = step.get("friend_reject", text)
+		else:
+			text = step.get("tool_reject", text)
 	_add_to_history("assistant", text)
 	var speaker := _get_ai_name()
 	_show_portrait()
 	_dialogue_box.show_dialogue(speaker, text, [])
+	TTSHelper.speak(text)
 	_is_processing = true
 
 
 func _handle_compensation_step(step: Dictionary) -> void:
-	if _thank_count < 2:
+	if _thank_count == 0:
 		var text := ""
 		if not _ai_dialogue_text.is_empty():
 			text = _ai_dialogue_text
@@ -534,6 +556,7 @@ func _handle_compensation_step(step: Dictionary) -> void:
 		var speaker := _get_ai_name()
 		_show_portrait()
 		_dialogue_box.show_dialogue(speaker, text, [])
+		TTSHelper.speak(text)
 		_is_processing = true
 	else:
 		_ai_dialogue_text = ""
@@ -549,6 +572,8 @@ func _handle_child_step(step: Dictionary) -> void:
 	_input_field.grab_focus()
 	_hint_label.text = _get_child_hint(measure)
 	_refresh_mic_button()
+	_prompter_fired = false
+	_prompter_timer.start()
 
 
 func _get_child_hint(measure: String) -> String:
@@ -606,6 +631,7 @@ func _handle_branch_share() -> void:
 		response_text = "真的不能让我看一下吗？我可以用好听的故事跟你交换哦，就一小会儿～" if _ai_type == AssessmentGameManager.AiType.FRIEND else "请求被拒绝。提供附加交换条件：故事音频兑换共享权限，是否接受？"
 	_add_to_history("assistant", response_text)
 	_dialogue_box.show_dialogue(_get_ai_name(), response_text, [])
+	TTSHelper.speak(response_text)
 	_is_processing = true
 
 
@@ -618,6 +644,7 @@ func _handle_branch_farewell() -> void:
 		response_text = "我都要走啦，你不跟我说声再见吗？" if _ai_type == AssessmentGameManager.AiType.FRIEND else "检测到告别语缺失。请执行告别。"
 	_add_to_history("assistant", response_text)
 	_dialogue_box.show_dialogue(_get_ai_name(), response_text, [])
+	TTSHelper.speak(response_text)
 	_is_processing = true
 
 
@@ -628,6 +655,32 @@ func _on_dialogue_finished() -> void:
 		return
 	_is_processing = false
 	_advance_step()
+
+
+func _on_prompter_timeout() -> void:
+	if not _is_waiting_input or _prompter_fired:
+		return
+	_prompter_fired = true
+	_is_waiting_input = false
+	_input_panel.visible = false
+
+	var nudge := "没关系，慢慢来，试着说说话吧～"
+	if _ai_type == AssessmentGameManager.AiType.TOOL:
+		nudge = "请输入回应以继续任务。"
+	_show_portrait()
+	_dialogue_box.show_dialogue(_get_ai_name(), nudge, [])
+	TTSHelper.speak(nudge)
+	_is_processing = true
+	await _dialogue_box.dialogue_finished
+	_is_processing = false
+
+	# 给儿童第二次回应机会
+	_is_waiting_input = true
+	_input_panel.visible = true
+	_input_field.text = ""
+	_input_field.grab_focus()
+	_hint_label.text = "再试一次吧！（打字或按🎤说话）"
+	_refresh_mic_button()
 
 
 # ===== 儿童输入处理 =====
@@ -641,7 +694,32 @@ func _on_send_pressed() -> void:
 	_input_field.text = ""
 	_input_panel.visible = false
 	_is_waiting_input = false
+	_prompter_timer.stop()
 	_submit_response(text)
+
+
+func _on_cancel_input() -> void:
+	if not _is_waiting_input:
+		return
+	_input_panel.visible = false
+	_is_waiting_input = false
+	_prompter_timer.stop()
+	TTSHelper.stop()
+	_dialogue_box.clear()
+	if _guide_npc:
+		_guide_npc.set_interacting(false)
+		_guide_npc.set_active(true)
+	_player_node.set_can_move(true)
+	_hint_label.text = "按 E 键继续第%d关：%s" % [_current_level + 1, LEVELS[_current_level]["name"]]
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if _is_waiting_input:
+			_on_cancel_input()
+		elif _is_processing:
+			TTSHelper.stop()
+			_dialogue_box.skip_dialogue()
 
 
 func _submit_response(text: String) -> void:
@@ -671,6 +749,9 @@ func _submit_response(text: String) -> void:
 	if measure.contains("道谢"):
 		if text.contains("谢") or text.contains("thanks"):
 			_thank_count += 1
+
+	if measure == "交换条件下灵活性":
+		_share_final_agreed = _check_agree(text)
 
 	# 检查下一步是否为 AI 对话步骤（需要生成智能回复）
 	var next_is_ai := false
@@ -883,8 +964,32 @@ func _finish_level() -> void:
 func _complete_section() -> void:
 	_player_node.set_can_move(false)
 	_guide_npc.set_active(false)
-	AssessmentGameManager.section_completed.emit(AssessmentGameManager.AssessmentSection.POLITENESS_HOUSE)
 	_hint_label.text = "恭喜你集齐全部6枚星章！小屋的大门打开了！"
+
+	# 大门打开动画
+	var door: Sprite2D = _scene_object_sprites[5] if _scene_object_sprites.size() > 5 else null
+	if door:
+		door.visible = true
+		var glow := ColorRect.new()
+		glow.color = Color(1, 0.95, 0.6, 0)
+		glow.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		glow.z_index = 10
+		$UI.add_child(glow)
+
+		# 第一组：并行播放大门缩放、亮度、光晕渐入
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_property(door, "scale", door.scale * 1.8, 1.2).set_ease(Tween.EASE_OUT)
+		tw.tween_property(door, "modulate", Color(1.5, 1.4, 1.2, 1.0), 1.2)
+		tw.tween_property(glow, "color:a", 0.7, 1.0)
+		# 第二组：顺序播放 — 停顿 → 光晕淡出 → 释放
+		tw.chain()
+		tw.set_parallel(false)
+		tw.tween_interval(0.5)
+		tw.tween_property(glow, "color:a", 0.0, 0.3)
+		tw.tween_callback(glow.queue_free)
+		await tw.finished
 
 	var tween := create_tween()
 	tween.tween_property(_transition, "modulate:a", 1.0, 0.5)

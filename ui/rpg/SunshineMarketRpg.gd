@@ -10,6 +10,7 @@ extends Node2D
 @onready var _input_field: LineEdit = $UI/InputPanel/VBox/InputField
 @onready var _send_button: Button = $UI/InputPanel/VBox/HBox/SendButton
 @onready var _mic_button: Button = $UI/InputPanel/VBox/HBox/MicButton
+@onready var _cancel_button: Button = $UI/InputPanel/VBox/HBox/CancelButton
 @onready var _voice_status: Label = $UI/InputPanel/VBox/VoiceStatus
 @onready var _level_label: Label = $UI/LevelLabel
 @onready var _progress_bar: ProgressBar = $UI/ProgressBar
@@ -40,6 +41,10 @@ var _ai_manager: AssessmentAIManager
 var _dialogue_messages: Array = []
 var _last_child_text: String = ""
 
+# 推进器（沉默儿童提示）
+var _prompter_timer: Timer
+var _prompter_fired: bool = false
+
 # NPC 位置布局（阳光超市室内8个点位）
 # SL1: 3个事件 NPC
 # SL2: 3个阶段 NPC（推车管理员、贴纸姐姐/竞争者、收银员）
@@ -67,6 +72,13 @@ func _ready() -> void:
 	_ai_manager.ai_response_error.connect(_on_ai_error)
 	_ai_manager.scoring_received.connect(_on_scoring_received)
 	_ai_manager.scoring_error.connect(_on_scoring_error)
+
+	# 推进器计时器（10秒无回应时触发提示）
+	_prompter_timer = Timer.new()
+	_prompter_timer.wait_time = 10.0
+	_prompter_timer.one_shot = true
+	_prompter_timer.timeout.connect(_on_prompter_timeout)
+	add_child(_prompter_timer)
 
 	_setup_map()
 	_setup_npcs()
@@ -163,11 +175,13 @@ func _setup_ui() -> void:
 
 	AssessmentUiTheme.apply_primary_button(_send_button)
 	AssessmentUiTheme.apply_primary_button(_mic_button)
+	AssessmentUiTheme.apply_primary_button(_cancel_button)
 	_input_panel.add_theme_stylebox_override("panel", AssessmentUiTheme.dialogue_panel_style())
 
 	_dialogue_box.dialogue_finished.connect(_on_dialogue_finished)
 	_send_button.pressed.connect(_on_send_pressed)
 	_mic_button.pressed.connect(_on_mic_button_pressed)
+	_cancel_button.pressed.connect(_on_cancel_input)
 	_input_panel.visible = false
 	_portrait.visible = false
 	_dialogue_box.set_portrait(null)
@@ -202,6 +216,28 @@ func _refresh_mic_button() -> void:
 # 故事线一：社会距离事件
 # ============================================================
 
+## 根据当前进度生成适合儿童理解的任务指引
+func _show_current_hint() -> void:
+	var npc_name: String = ""
+	var desc: String = ""
+
+	if _story_phase == 0:
+		var event_data := AssessmentData.get_story_line_1_event_by_index(_sl1_event_index)
+		npc_name = event_data.get("npc", {}).get("name", "")
+		desc = event_data.get("description", "")
+		var goal: String = event_data.get("interaction_goal", "")
+		_hint_label.text = "【任务】%s\n走到「%s」旁边，按 E 键开始对话。\n试试说：%s" % [desc, npc_name, goal]
+	else:
+		var phase_data := AssessmentData.get_story_line_2_phase_by_index(_sl2_phase_index)
+		var npc_idx: int = 3 + min(_sl2_phase_index, 2)
+		if npc_idx < _all_npcs.size():
+			npc_name = _all_npcs[npc_idx].get("npc_name")
+		desc = phase_data.get("scene_context", "")
+		var goal: String = phase_data.get("interaction_goal", "")
+		var pressure: String = phase_data.get("pressure_level", "")
+		_hint_label.text = "【任务·压力%s】%s\n走到「%s」旁边，按 E 键开始。\n目标：%s" % [pressure, desc, npc_name, goal]
+
+
 func _start_sl1_event(index: int) -> void:
 	_sl1_event_index = index
 	_current_step_index = 0
@@ -225,7 +261,7 @@ func _start_sl1_event(index: int) -> void:
 
 	_level_label.text = "故事线一 事件 %d/3：%s" % [index + 1, event_name]
 	_progress_bar.value = float(index) / 6.0 * 100.0
-	_hint_label.text = "走到「%s」旁边按 E 键对话" % npc_name
+	_show_current_hint()
 
 	# 更新 NPC 显示名
 	if index < 3:
@@ -274,6 +310,7 @@ func _start_current_step() -> void:
 		_dialogue_box.set_portrait(null)
 
 	_dialogue_box.show_dialogue(speaker, text, [])
+	TTSHelper.speak(text)
 	_is_processing = true
 
 
@@ -295,6 +332,7 @@ func _on_dialogue_finished() -> void:
 		_input_field.grab_focus()
 		_hint_label.text = "请用语音或文字回答，然后点击发送"
 		_refresh_mic_button()
+		_start_prompter_timer()
 	else:
 		# SL2：有 measure_point 的步骤需要回应
 		var step: Dictionary = _current_steps[_current_step_index]
@@ -307,6 +345,7 @@ func _on_dialogue_finished() -> void:
 			_input_field.grab_focus()
 			_hint_label.text = "请用语音或文字回答，然后点击发送"
 			_refresh_mic_button()
+			_start_prompter_timer()
 		else:
 			_advance_step()
 
@@ -320,7 +359,36 @@ func _on_send_pressed() -> void:
 	_input_field.text = ""
 	_input_panel.visible = false
 	_is_waiting_input = false
+	_stop_prompter_timer()
 	_submit_response(text)
+
+
+func _on_cancel_input() -> void:
+	if not _is_waiting_input:
+		return
+	_input_panel.visible = false
+	_is_waiting_input = false
+	_stop_prompter_timer()
+	TTSHelper.stop()
+	_dialogue_box.clear()
+
+	# 恢复当前 NPC 为可交互状态
+	var npc_idx := _get_current_npc_index()
+	if npc_idx >= 0 and npc_idx < _all_npcs.size():
+		_all_npcs[npc_idx].set_interacting(false)
+		_all_npcs[npc_idx].set_active(true)
+
+	_player.set_can_move(true)
+	_show_current_hint()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if _is_waiting_input:
+			_on_cancel_input()
+		elif _is_processing:
+			TTSHelper.stop()
+			_dialogue_box.skip_dialogue()
 
 
 func _submit_response(text: String) -> void:
@@ -336,19 +404,27 @@ func _submit_response(text: String) -> void:
 		dimension = measure_point
 
 	_last_child_text = text
-	AssessmentGameManager.record_turn({
+	var turn_record := {
 		"speaker": "child",
 		"text": text,
 		"measure_point": measure_point,
 		"dimension": dimension,
 		"section": "sunshine_market",
-	})
-	_current_turns.append({
+	}
+	var turn_local := {
 		"text": text,
 		"measure_point": measure_point,
 		"dimension": dimension,
 		"level": 2,
-	})
+	}
+	# SL2: 记录压力等级
+	if _story_phase == 1:
+		var phase_data := AssessmentData.get_story_line_2_phase_by_index(_sl2_phase_index)
+		var pressure: String = phase_data.get("pressure_level", "")
+		turn_record["pressure_level"] = pressure
+		turn_local["pressure_level"] = pressure
+	AssessmentGameManager.record_turn(turn_record)
+	_current_turns.append(turn_local)
 
 	_dialogue_messages.append({"role": "user", "content": text})
 	_is_processing = true
@@ -372,13 +448,52 @@ func _on_scoring_received(result: Dictionary) -> void:
 	if _current_turns.size() > 0:
 		_current_turns[-1]["level"] = level
 		_current_turns[-1]["markers"] = result.get("markers", [])
-	AssessmentGameManager.record_turn({
-		"speaker": "child_score",
-		"text": _last_child_text,
-		"score": result,
-		"section": "sunshine_market",
-	})
+
+	# 情境适配正确率：比较实际等级与预期等级
+	if _story_phase == 0:
+		var event_data := AssessmentData.get_story_line_1_event_by_index(_sl1_event_index)
+		var expected: String = event_data.get("expected_politeness_level", "")
+		var level_fit := _check_level_fit(level, expected)
+		var expected_dim: String = event_data.get("social_distance", {}).get("type", "")
+		if _current_turns.size() > 0:
+			_current_turns[-1]["expected_level"] = expected
+			_current_turns[-1]["level_fit"] = level_fit
+			_current_turns[-1]["expected_dimension"] = expected_dim
+		AssessmentGameManager.record_turn({
+			"speaker": "child_score",
+			"text": _last_child_text,
+			"score": result,
+			"section": "sunshine_market",
+			"expected_level": expected,
+			"level_fit": level_fit,
+			"expected_dimension": expected_dim,
+		})
+	else:
+		AssessmentGameManager.record_turn({
+			"speaker": "child_score",
+			"text": _last_child_text,
+			"score": result,
+			"section": "sunshine_market",
+		})
 	_hint_label.text = "评分完成（等级 %d）" % level
+
+
+func _check_level_fit(actual_level: int, expected: String) -> bool:
+	if expected.is_empty():
+		return true
+	for token in expected.split("或"):
+		token = token.strip_edges()
+		if "-" in token:
+			var parts := token.split("-")
+			if parts.size() == 2:
+				var lo := int(parts[0])
+				var hi := int(parts[1])
+				if actual_level >= lo and actual_level <= hi:
+					return true
+		else:
+			if actual_level == int(token):
+				return true
+	return false
 
 
 func _on_scoring_error(error: String) -> void:
@@ -404,6 +519,7 @@ func _on_ai_response(response: String) -> void:
 		npc_name = round_data.get("npc", {}).get("name", "")
 
 	_dialogue_box.show_dialogue(npc_name, response, [])
+	TTSHelper.speak(response)
 	_is_processing = true
 	await _dialogue_box.dialogue_finished
 	_is_processing = false
@@ -417,10 +533,46 @@ func _on_ai_error(error: String) -> void:
 		fallback = "回答已记录。请继续。"
 	var npc_name := "NPC"
 	_dialogue_box.show_dialogue(npc_name, fallback, [])
+	TTSHelper.speak(fallback)
 	_is_processing = true
 	await _dialogue_box.dialogue_finished
 	_is_processing = false
 	_advance_step()
+
+
+func _start_prompter_timer() -> void:
+	_prompter_fired = false
+	_prompter_timer.start()
+
+
+func _stop_prompter_timer() -> void:
+	_prompter_timer.stop()
+
+
+func _on_prompter_timeout() -> void:
+	if not _is_waiting_input or _prompter_fired:
+		return
+	_prompter_fired = true
+	_is_waiting_input = false
+	_input_panel.visible = false
+
+	var nudge := "咦？你是不是有点害羞？没关系，再试一次吧～"
+	if _ai_type == AssessmentGameManager.AiType.TOOL:
+		nudge = "未检测到语音输入。请重新回应。"
+	var guide_name := "向导" if _ai_type == AssessmentGameManager.AiType.FRIEND else "引导系统"
+	_dialogue_box.show_dialogue(guide_name, nudge, [])
+	TTSHelper.speak(nudge)
+	_is_processing = true
+	await _dialogue_box.dialogue_finished
+	_is_processing = false
+
+	# 给儿童第二次回应机会
+	_is_waiting_input = true
+	_input_panel.visible = true
+	_input_field.text = ""
+	_input_field.grab_focus()
+	_hint_label.text = "再试一次吧！（打字或按🎤说话）"
+	_refresh_mic_button()
 
 
 func _advance_step() -> void:
@@ -439,6 +591,23 @@ func _finish_current_event() -> void:
 	_current_event_result["stars"] = _level_to_stars(avg_level)
 	_current_event_result["turns"] = _current_turns.duplicate(true)
 	_current_event_result["statistics"] = stats
+
+	# SL1: 计算情境适配正确率
+	if _story_phase == 0:
+		var fit_count := 0
+		var total_fit := 0
+		for turn in _current_turns:
+			if turn is Dictionary and turn.has("level_fit"):
+				total_fit += 1
+				if bool(turn.get("level_fit", false)):
+					fit_count += 1
+		var accuracy: float = float(fit_count) / float(total_fit) if total_fit > 0 else 0.0
+		_current_event_result["contextual_adaptation"] = {
+			"accuracy": accuracy,
+			"correct": fit_count,
+			"total": total_fit,
+		}
+
 	_section_results.append(_current_event_result.duplicate(true))
 
 	# 记录场景结果到全局管理器
@@ -487,6 +656,13 @@ func _level_to_stars(level: float) -> int:
 # 故事线二：压力递进购物任务
 # ============================================================
 
+## 从故事线一过渡到故事线二
+func _start_sl2() -> void:
+	_story_phase = 1
+	_player.set_can_move(true)
+	_start_sl2_phase(0)
+
+
 func _start_sl2_phase(index: int) -> void:
 	_sl2_phase_index = index
 	_sl2_round_index = 0
@@ -521,7 +697,7 @@ func _start_sl2_phase(index: int) -> void:
 			var npc_name: String = first_npc.get("name", "NPC")
 			_all_npcs[npc_idx].set("npc_name", npc_name)
 		_all_npcs[npc_idx].set_active(true)
-	_hint_label.text = "走到「%s」旁边按 E 键开始任务" % _all_npcs[npc_idx].get("npc_name")
+	_show_current_hint()
 
 	# 准备步骤（每轮作为一个步骤）
 	_current_steps = []
@@ -558,15 +734,12 @@ func _build_final_results() -> Dictionary:
 	var all_turns := AssessmentGameManager.get_all_turns()
 
 	# 使用 PolitenessScoring 生成雷达数据
-	var scenario_results_array: Array = []
-	for key in all_scenarios.keys():
-		scenario_results_array.append(all_scenarios[key])
-
-	var radar_data := PolitenessScoring.generate_radar_data(scenario_results_array)
+	var radar_data := PolitenessScoring.generate_radar_data(all_scenarios)
+	var level_radar: Dictionary = radar_data.get("level_radar", {})
 	var total_score := 0.0
 	var count := 0
-	for dim in radar_data.get("dimensions", {}).values():
-		total_score += float(dim.get("average_level", 0))
+	for level_value in level_radar.values():
+		total_score += float(level_value)
 		count += 1
 	var avg_score: float = total_score / max(count, 1)
 

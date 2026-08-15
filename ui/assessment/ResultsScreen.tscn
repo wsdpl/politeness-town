@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://ui/assessment/ResultsScreen.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/ui/backgrounds/startup_town_background.png" id="2_bg"]
 [ext_resource type="PackedScene" path="res://ui/assessment/RadarChart.tscn" id="3_radar"]
+[ext_resource type="Script" path="res://ui/assessment/BarChart.gd" id="4_bar"]
+[ext_resource type="Script" path="res://ui/assessment/PieChart.gd" id="5_pie"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_radar_panel"]
 bg_color = Color(0.973, 0.941, 0.851, 1)
@@ -19,6 +21,22 @@ content_margin_left = 16.0
 content_margin_top = 16.0
 content_margin_right = 16.0
 content_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chart_panel"]
+bg_color = Color(0.973, 0.941, 0.851, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.424, 0.239, 0.125, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
 
 [node name="ResultsScreen" type="Control"]
 layout_mode = 3
@@ -57,9 +75,9 @@ mouse_filter = 2
 [node name="TitleLabel" type="Label" parent="CanvasLayer"]
 layout_mode = 0
 offset_left = 0.0
-offset_top = 16.0
+offset_top = 10.0
 offset_right = 1920.0
-offset_bottom = 64.0
+offset_bottom = 50.0
 theme_override_font_sizes/font_size = 36
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -69,26 +87,26 @@ text = "测评结果报告"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 0.0
-offset_top = 70.0
+offset_top = 52.0
 offset_right = 1920.0
-offset_bottom = 104.0
-theme_override_font_sizes/font_size = 28
+offset_bottom = 84.0
+theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 vertical_alignment = 1
 text = ""
 
 [node name="ScoreContainer" type="HBoxContainer" parent="CanvasLayer"]
 layout_mode = 0
-offset_left = 450.0
-offset_top = 120.0
-offset_right = 1470.0
-offset_bottom = 670.0
+offset_left = 430.0
+offset_top = 90.0
+offset_right = 1490.0
+offset_bottom = 470.0
 theme_override_constants/separation = 20
 alignment = 1
 
 [node name="FrequencyRadarPanel" type="Panel" parent="CanvasLayer/ScoreContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(500, 550)
+custom_minimum_size = Vector2(500, 380)
 theme_override_styles/panel = SubResource("StyleBoxFlat_radar_panel")
 
 [node name="FrequencyRadar" parent="CanvasLayer/ScoreContainer/FrequencyRadarPanel" instance=ExtResource("3_radar")]
@@ -101,22 +119,22 @@ anchor_bottom = 0.0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 500.0
-offset_bottom = 500.0
+offset_bottom = 330.0
 
 [node name="FreqTitleLabel" type="Label" parent="CanvasLayer/ScoreContainer/FrequencyRadarPanel"]
 layout_mode = 0
 offset_left = 0.0
-offset_top = 508.0
+offset_top = 336.0
 offset_right = 500.0
-offset_bottom = 548.0
-theme_override_font_sizes/font_size = 28
+offset_bottom = 376.0
+theme_override_font_sizes/font_size = 26
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "频次雷达图"
 
 [node name="LevelRadarPanel" type="Panel" parent="CanvasLayer/ScoreContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(500, 550)
+custom_minimum_size = Vector2(500, 380)
 theme_override_styles/panel = SubResource("StyleBoxFlat_radar_panel")
 
 [node name="LevelRadar" parent="CanvasLayer/ScoreContainer/LevelRadarPanel" instance=ExtResource("3_radar")]
@@ -129,98 +147,175 @@ anchor_bottom = 0.0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 500.0
-offset_bottom = 500.0
+offset_bottom = 330.0
 
 [node name="LevelTitleLabel" type="Label" parent="CanvasLayer/ScoreContainer/LevelRadarPanel"]
 layout_mode = 0
 offset_left = 0.0
-offset_top = 508.0
+offset_top = 336.0
 offset_right = 500.0
-offset_bottom = 548.0
-theme_override_font_sizes/font_size = 28
+offset_bottom = 376.0
+theme_override_font_sizes/font_size = 26
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "等级雷达图"
+
+[node name="ChartsContainer" type="HBoxContainer" parent="CanvasLayer"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 480.0
+offset_right = 1880.0
+offset_bottom = 740.0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BarChartPanel" type="Panel" parent="CanvasLayer/ChartsContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(680, 260)
+theme_override_styles/panel = SubResource("StyleBoxFlat_chart_panel")
+
+[node name="BarChart" type="Control" parent="CanvasLayer/ChartsContainer/BarChartPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 672.0
+offset_bottom = 252.0
+script = ExtResource("4_bar")
+
+[node name="PieChartPanel" type="Panel" parent="CanvasLayer/ChartsContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(680, 260)
+theme_override_styles/panel = SubResource("StyleBoxFlat_chart_panel")
+
+[node name="PieChart" type="Control" parent="CanvasLayer/ChartsContainer/PieChartPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 672.0
+offset_bottom = 252.0
+script = ExtResource("5_pie")
 
 [node name="ScoreTable" type="VBoxContainer" parent="CanvasLayer"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 40.0
-offset_top = 700.0
+offset_top = 750.0
 offset_right = 440.0
-offset_bottom = 1000.0
-theme_override_constants/separation = 6
+offset_bottom = 980.0
+theme_override_constants/separation = 4
 
 [node name="Header" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = "维度 | 频次 | 等级 | 星章"
 
 [node name="Row1" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = ""
 
 [node name="Row2" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = ""
 
 [node name="Row3" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = ""
 
 [node name="Row4" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = ""
 
 [node name="Row5" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = ""
 
 [node name="Row6" type="Label" parent="CanvasLayer/ScoreTable"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
+text = ""
+
+[node name="ExtendedDimsContainer" type="VBoxContainer" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 460.0
+offset_top = 750.0
+offset_right = 1080.0
+offset_bottom = 980.0
+theme_override_constants/separation = 4
+
+[node name="ExtHeader" type="Label" parent="CanvasLayer/ExtendedDimsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "扩展维度评估"
+
+[node name="ExtRow1" type="Label" parent="CanvasLayer/ExtendedDimsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = ""
+
+[node name="ExtRow2" type="Label" parent="CanvasLayer/ExtendedDimsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = ""
+
+[node name="ExtRow3" type="Label" parent="CanvasLayer/ExtendedDimsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = ""
+
+[node name="ExtRow4" type="Label" parent="CanvasLayer/ExtendedDimsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
 text = ""
 
 [node name="InfoContainer" type="VBoxContainer" parent="CanvasLayer"]
 layout_mode = 0
-offset_left = 1480.0
-offset_top = 700.0
+offset_left = 1100.0
+offset_top = 750.0
 offset_right = 1880.0
-offset_bottom = 1000.0
-theme_override_constants/separation = 10
+offset_bottom = 980.0
+theme_override_constants/separation = 8
 
 [node name="TotalStarsLabel" type="Label" parent="CanvasLayer/InfoContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 26
 text = "总星章: 0/6"
 
 [node name="OverallScoreLabel" type="Label" parent="CanvasLayer/InfoContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 26
 text = "总分: 0.0/5.0"
+
+[node name="TurnCountLabel" type="Label" parent="CanvasLayer/InfoContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "话轮数: 0"
 
 [node name="RecommendationLabel" type="RichTextLabel" parent="CanvasLayer/InfoContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(350, 150)
+custom_minimum_size = Vector2(360, 120)
 size_flags_horizontal = 0
-theme_override_font_sizes/normal_font_size = 28
+theme_override_font_sizes/normal_font_size = 22
 bbcode_enabled = false
 text = ""
 
 [node name="ButtonContainer" type="HBoxContainer" parent="CanvasLayer"]
 layout_mode = 0
-offset_left = 705.0
-offset_top = 1010.0
-offset_right = 1215.0
-offset_bottom = 1060.0
+offset_left = 600.0
+offset_top = 990.0
+offset_right = 1320.0
+offset_bottom = 1040.0
 theme_override_constants/separation = 30
 alignment = 1
 
@@ -228,19 +323,26 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(150, 50)
-theme_override_font_sizes/font_size = 28
-text = "导出报告"
+theme_override_font_sizes/font_size = 26
+text = "导出JSON报告"
+
+[node name="ExportCsvButton" type="Button" parent="CanvasLayer/ButtonContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(150, 50)
+theme_override_font_sizes/font_size = 26
+text = "导出CSV数据"
 
 [node name="RestartButton" type="Button" parent="CanvasLayer/ButtonContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(150, 50)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 26
 text = "重新测评"
 
 [node name="QuitButton" type="Button" parent="CanvasLayer/ButtonContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(150, 50)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 26
 text = "退出"
