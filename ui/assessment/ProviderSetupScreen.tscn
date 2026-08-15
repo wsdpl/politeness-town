@@ -1,0 +1,174 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/assessment/ProviderSetupScreen.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/startup_town_background.png" id="2_bg"]
+
+[node name="ProviderSetupScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="TextureRect" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+mouse_filter = 2
+
+[node name="BackdropShade" type="ColorRect" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.067, 0.047, 0.549)
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_right = 300.0
+offset_top = 60.0
+offset_bottom = 112.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "API 设置"
+
+[node name="FormCenter" type="CenterContainer" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 140.0
+offset_bottom = -240.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FormContainer" type="VBoxContainer" parent="CanvasLayer/FormCenter"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="EndpointRow" type="HBoxContainer" parent="CanvasLayer/FormCenter/FormContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="EndpointLabel" type="Label" parent="CanvasLayer/FormCenter/FormContainer/EndpointRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "API Endpoint："
+
+[node name="EndpointEdit" type="LineEdit" parent="CanvasLayer/FormCenter/FormContainer/EndpointRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(480, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "https://api.deepseek.com/chat/completions"
+
+[node name="ApiKeyRow" type="HBoxContainer" parent="CanvasLayer/FormCenter/FormContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ApiKeyLabel" type="Label" parent="CanvasLayer/FormCenter/FormContainer/ApiKeyRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "API Key："
+
+[node name="ApiKeyEdit" type="LineEdit" parent="CanvasLayer/FormCenter/FormContainer/ApiKeyRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(480, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+secret = true
+secret_character = "•"
+placeholder_text = "请输入 API Key"
+
+[node name="ModelRow" type="HBoxContainer" parent="CanvasLayer/FormCenter/FormContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ModelLabel" type="Label" parent="CanvasLayer/FormCenter/FormContainer/ModelRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "Model："
+
+[node name="ModelEdit" type="LineEdit" parent="CanvasLayer/FormCenter/FormContainer/ModelRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(480, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "deepseek-chat"
+
+[node name="TestResultLabel" type="Label" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_right = 400.0
+offset_top = -220.0
+offset_bottom = -150.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.247, 0.157, 0.094, 1)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+text = "尚未测试连接。"
+
+[node name="ButtonContainer" type="HBoxContainer" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_right = 260.0
+offset_top = -104.0
+offset_bottom = -56.0
+grow_horizontal = 2
+alignment = 1
+
+[node name="BackButton" type="Button" parent="CanvasLayer/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 48)
+theme_override_font_sizes/font_size = 28
+text = "返回"
+
+[node name="TestButton" type="Button" parent="CanvasLayer/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 48)
+theme_override_font_sizes/font_size = 28
+text = "测试连接"
+
+[node name="SaveButton" type="Button" parent="CanvasLayer/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 48)
+theme_override_font_sizes/font_size = 28
+text = "保存"

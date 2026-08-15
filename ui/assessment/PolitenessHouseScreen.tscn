@@ -1,0 +1,112 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/assessment/PolitenessHouseScreen.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://ui/assessment/DialogueBox.tscn" id="2_dialogue"]
+[ext_resource type="PackedScene" path="res://ui/assessment/StarBadgeBoard.tscn" id="3_star_badge"]
+[ext_resource type="PackedScene" path="res://ui/assessment/TipBoard.tscn" id="4_tip"]
+[ext_resource type="Script" path="res://assessment/AssessmentAIManager.gd" id="5_ai"]
+[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/startup_town_background.png" id="6_background"]
+
+[node name="PolitenessHouseScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="TextureRect" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("6_background")
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+mouse_filter = 2
+
+[node name="BackdropShade" type="ColorRect" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.067, 0.047, 0.549)
+mouse_filter = 2
+
+[node name="LevelLabel" type="Label" parent="CanvasLayer"]
+layout_mode = 1
+offset_left = 0.0
+offset_top = 20.0
+offset_right = 1920.0
+offset_bottom = 70.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 32
+text = "第1关: 迎宾问候"
+
+[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer"]
+layout_mode = 1
+offset_left = 60.0
+offset_top = 78.0
+offset_right = 1860.0
+offset_bottom = 88.0
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="StarBadgeBoard" parent="CanvasLayer" instance=ExtResource("3_star_badge")]
+
+[node name="TipBoard" parent="CanvasLayer" instance=ExtResource("4_tip")]
+
+[node name="DialogueBox" parent="CanvasLayer" instance=ExtResource("2_dialogue")]
+
+[node name="InputContainer" type="HBoxContainer" parent="CanvasLayer"]
+layout_mode = 1
+offset_left = 405.0
+offset_top = 720.0
+offset_right = 1515.0
+offset_bottom = 770.0
+theme_override_constants/separation = 10
+
+[node name="InputField" type="LineEdit" parent="CanvasLayer/InputContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(1000, 50)
+theme_override_font_sizes/font_size = 28
+placeholder_text = "在这里输入你的回答..."
+
+[node name="SendButton" type="Button" parent="CanvasLayer/InputContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 50)
+theme_override_font_sizes/font_size = 28
+disabled = true
+text = "发送"
+
+[node name="LoadingLabel" type="Label" parent="CanvasLayer"]
+layout_mode = 1
+offset_left = 0.0
+offset_top = 690.0
+offset_right = 1920.0
+offset_bottom = 720.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "AI正在思考..."
+visible = false
+
+[node name="ContinueButton" type="Button" parent="CanvasLayer"]
+layout_mode = 1
+offset_left = 810.0
+offset_top = 620.0
+offset_right = 1110.0
+offset_bottom = 680.0
+theme_override_font_sizes/font_size = 28
+text = "继续下一关"
+visible = false
+
+[node name="AssessmentAIManager" type="Node" parent="."]
+script = ExtResource("5_ai")

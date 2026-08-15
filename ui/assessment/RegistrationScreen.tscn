@@ -1,0 +1,288 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/assessment/RegistrationScreen.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/startup_town_background.png" id="2_bg"]
+
+[node name="RegistrationScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="TextureRect" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+mouse_filter = 2
+
+[node name="BackdropShade" type="ColorRect" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.067, 0.047, 0.549)
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_right = 400.0
+offset_top = 48.0
+offset_bottom = 120.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "礼貌小镇"
+
+[node name="SubtitleLabel" type="Label" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_right = 400.0
+offset_top = 124.0
+offset_bottom = 160.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "儿童礼貌语言能力测评系统"
+
+[node name="FormContainer" type="CenterContainer" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 176.0
+offset_bottom = -128.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/FormContainer"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="RegistrationHeading" type="Label" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+text = "注册信息"
+
+[node name="NicknameRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NicknameLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/NicknameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "昵称："
+
+[node name="NicknameEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/NicknameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+placeholder_text = "请输入昵称（必填）"
+
+[node name="AgeRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AgeLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/AgeRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "年龄："
+
+[node name="AgeSpinBox" type="SpinBox" parent="CanvasLayer/FormContainer/VBox/AgeRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+theme_override_font_sizes/font_size = 28
+min_value = 4
+max_value = 6
+value = 5
+suffix = " 岁"
+
+[node name="GenderRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GenderLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/GenderRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "性别："
+
+[node name="GenderOption" type="OptionButton" parent="CanvasLayer/FormContainer/VBox/GenderRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+
+[node name="SchoolRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SchoolLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/SchoolRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "幼儿园名称："
+
+[node name="SchoolEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/SchoolRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+placeholder_text = "请输入幼儿园名称"
+
+[node name="ClassRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ClassLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/ClassRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "班级名称："
+
+[node name="ClassEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/ClassRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+placeholder_text = "请输入班级名称"
+
+[node name="GuardianNameRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GuardianNameLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/GuardianNameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "监护人姓名："
+
+[node name="GuardianNameEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/GuardianNameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+placeholder_text = "请输入监护人姓名"
+
+[node name="GuardianPhoneRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GuardianPhoneLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/GuardianPhoneRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "监护人电话："
+
+[node name="GuardianPhoneEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/GuardianPhoneRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+placeholder_text = "请输入监护人电话"
+
+[node name="DisorderRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DisorderLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/DisorderRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "是否有语言障碍："
+
+[node name="DisorderCheckBox" type="CheckBox" parent="CanvasLayer/FormContainer/VBox/DisorderRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "是"
+
+[node name="DeviceRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DeviceLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/DeviceRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "智能设备使用程度："
+
+[node name="DeviceOption" type="OptionButton" parent="CanvasLayer/FormContainer/VBox/DeviceRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+
+[node name="AiTypeRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AiTypeLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/AiTypeRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+text = "AI 类型："
+
+[node name="AiTypeOption" type="OptionButton" parent="CanvasLayer/FormContainer/VBox/AiTypeRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+theme_override_font_sizes/font_size = 28
+
+[node name="ButtonContainer" type="HBoxContainer" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_right = 200.0
+offset_top = -104.0
+offset_bottom = -56.0
+grow_horizontal = 2
+alignment = 1
+
+[node name="APIButton" type="Button" parent="CanvasLayer/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 48)
+theme_override_font_sizes/font_size = 28
+text = "API设置"
+
+[node name="StartButton" type="Button" parent="CanvasLayer/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 48)
+theme_override_font_sizes/font_size = 28
+text = "开始测评"

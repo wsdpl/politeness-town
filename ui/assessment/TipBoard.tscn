@@ -1,0 +1,87 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/assessment/TipBoard.gd" id="1_script"]
+[ext_resource type="FontFile" path="res://assets/fonts/zheng_ge_dian_hei_16/ZhengGeDianHei-16.ttf" id="2_font"]
+
+[sub_resource type="FontVariation" id="FontVariation_bold"]
+base_font = ExtResource("2_font")
+variation_embolden = 1.3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.196, 0.114, 0.071, 0.90)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.898, 0.659, 0.294, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0.118, 0.071, 0.043, 0.45)
+shadow_size = 6
+shadow_offset = Vector2(4, 5)
+content_margin_left = 20
+content_margin_top = 16
+content_margin_right = 20
+content_margin_bottom = 16
+
+[node name="TipBoard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 370.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="TitleLabel" type="Label" parent="Panel"]
+layout_mode = 1
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 336.0
+offset_bottom = 44.0
+mouse_filter = 2
+theme_override_fonts/font = SubResource("FontVariation_bold")
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.953, 0.945, 0.890, 1)
+text = "任务提示"
+vertical_alignment = 1
+
+[node name="DimensionLabel" type="Label" parent="Panel"]
+layout_mode = 1
+offset_left = 14.0
+offset_top = 48.0
+offset_right = 336.0
+offset_bottom = 74.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.898, 0.659, 0.294, 1)
+text = "当前维度: "
+vertical_alignment = 1
+
+[node name="ContentLabel" type="RichTextLabel" parent="Panel"]
+layout_mode = 1
+offset_left = 14.0
+offset_top = 78.0
+offset_right = 336.0
+offset_bottom = 200.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.882, 0.851, 0.780, 1)
+bbcode_enabled = true
+autowrap_mode = 3
+scroll_active = false
+text = ""

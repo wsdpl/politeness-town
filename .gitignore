@@ -1,0 +1,20 @@
+# Godot 4.7+ specific
+.godot/
+*.uid
+
+# Build artifacts
+build/
+installer/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Unpacked documents
+板块一_unpacked/

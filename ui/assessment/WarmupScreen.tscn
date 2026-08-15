@@ -1,0 +1,156 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/assessment/WarmupScreen.gd" id="1"]
+[ext_resource type="Script" path="res://assessment/AssessmentAIManager.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/startup_town_background.png" id="3_bg"]
+
+[node name="WarmupScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="TextureRect" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+mouse_filter = 2
+
+[node name="BackdropShade" type="ColorRect" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.067, 0.047, 0.549)
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 0.0
+offset_top = 24.0
+offset_right = 1920.0
+offset_bottom = 88.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.306, 0.204, 0.18, 1)
+theme_override_font_sizes/font_size = 32
+text = "预热阶段 - 自由对话"
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1640.0
+offset_top = 28.0
+offset_right = 1890.0
+offset_bottom = 70.0
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.827, 0.184, 0.184, 1)
+theme_override_font_sizes/font_size = 28
+text = "03:00"
+
+[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1590.0
+offset_top = 78.0
+offset_right = 1890.0
+offset_bottom = 100.0
+max_value = 180.0
+value = 180.0
+show_percentage = false
+
+[node name="DialogueArea" type="RichTextLabel" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 360.0
+offset_top = 150.0
+offset_right = 1560.0
+offset_bottom = 650.0
+wrap_mode = 3
+bbcode_enabled = false
+scroll_following = true
+theme_override_colors/default_color = Color(0.243, 0.153, 0.137, 1)
+theme_override_font_sizes/font_size = 28
+text = ""
+
+[node name="InputContainer" type="HBoxContainer" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 505.0
+offset_top = 950.0
+offset_right = 1415.0
+offset_bottom = 1000.0
+theme_override_constants/separation = 10
+
+[node name="InputField" type="LineEdit" parent="CanvasLayer/InputContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+custom_minimum_size = Vector2(800, 50)
+theme_override_colors/font_color = Color(0.243, 0.153, 0.137, 1)
+theme_override_colors/font_placeholder_color = Color(0.553, 0.431, 0.388, 1)
+theme_override_font_sizes/font_size = 28
+placeholder_text = "输入消息..."
+
+[node name="SendButton" type="Button" parent="CanvasLayer/InputContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 1
+custom_minimum_size = Vector2(100, 50)
+theme_override_font_sizes/font_size = 28
+text = "发送"
+
+[node name="StartButton" type="Button" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 860.0
+offset_top = 510.0
+offset_right = 1060.0
+offset_bottom = 570.0
+theme_override_font_sizes/font_size = 28
+text = "开始预热"
+
+[node name="ContinueButton" type="Button" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 860.0
+offset_top = 720.0
+offset_right = 1060.0
+offset_bottom = 780.0
+visible = false
+theme_override_font_sizes/font_size = 28
+text = "继续"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 0.0
+offset_top = 1000.0
+offset_right = 1920.0
+offset_bottom = 1040.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.365, 0.251, 0.216, 1)
+theme_override_font_sizes/font_size = 28
+text = ""
+
+[node name="AssessmentAIManager" type="Node" parent="."]
+script = ExtResource("2")
