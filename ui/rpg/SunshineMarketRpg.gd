@@ -432,14 +432,13 @@ func _advance_step() -> void:
 
 
 func _finish_current_event() -> void:
-	var total_level := 0.0
-	for turn in _current_turns:
-		total_level += float(turn.get("level", 2))
-	var avg_level: float = total_level / max(_current_turns.size(), 1)
+	var stats := PolitenessScoring.calculate_scenario_statistics(_current_turns)
+	var avg_level: float = float(stats.get("average_level", 0.0))
 
 	_current_event_result["average_level"] = avg_level
 	_current_event_result["stars"] = _level_to_stars(avg_level)
 	_current_event_result["turns"] = _current_turns.duplicate(true)
+	_current_event_result["statistics"] = stats
 	_section_results.append(_current_event_result.duplicate(true))
 
 	# 记录场景结果到全局管理器

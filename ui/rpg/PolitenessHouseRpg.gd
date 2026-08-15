@@ -82,6 +82,14 @@ var _last_child_text: String = ""
 var _awaiting_scoring: bool = false
 var _thank_count: int = 0  # 第三关道谢计数
 
+# AI 对话生成状态
+var _ai_dialogue_text: String = ""       # AI 生成的对话文本
+var _awaiting_dialogue: bool = false      # 是否正在等待 AI 对话
+var _dialogue_done: bool = false          # AI 对话已完成（成功或失败）
+var _scoring_done: bool = false           # 评分已完成（成功或失败）
+var _dialogue_timer: Timer                # 对话超时计时器
+var _conversation_history: Array = []     # 当前关卡对话历史（供 AI 上下文参考）
+
 # 绘本小游戏状态
 var _book_pages: Array = []
 var _book_page_idx: int = 0
@@ -207,6 +215,13 @@ func _ready() -> void:
 	_scoring_timer.one_shot = true
 	_scoring_timer.timeout.connect(_on_scoring_timeout)
 	add_child(_scoring_timer)
+
+	# AI 对话生成超时计时器（8秒后回退到固定台词）
+	_dialogue_timer = Timer.new()
+	_dialogue_timer.wait_time = 8.0
+	_dialogue_timer.one_shot = true
+	_dialogue_timer.timeout.connect(_on_dialogue_timeout)
+	add_child(_dialogue_timer)
 
 	# 小游戏覆盖层（layer=2，在UI之上）
 	_minigame_layer = CanvasLayer.new()
@@ -412,6 +427,7 @@ func _start_level(index: int) -> void:
 	_current_level = index
 	_current_step = 0
 	_current_turns.clear()
+	_conversation_history.clear()
 	_current_level_result = {
 		"level": index + 1,
 		"name": LEVELS[index]["name"],
@@ -448,6 +464,10 @@ func _execute_current_step() -> void:
 
 	var step: Dictionary = _current_steps[_current_step]
 	var step_type: String = step.get("type", "")
+
+	# 非 AI 对话步骤清理生成文本，防止残留到后续步骤
+	if step_type != "ai" and step_type != "ai_compensation":
+		_ai_dialogue_text = ""
 
 	match step_type:
 		"system":
@@ -489,7 +509,13 @@ func _handle_system_step(step: Dictionary) -> void:
 
 
 func _handle_ai_step(step: Dictionary) -> void:
-	var text := _get_ai_text(step)
+	var text := ""
+	if not _ai_dialogue_text.is_empty():
+		text = _ai_dialogue_text
+		_ai_dialogue_text = ""
+	else:
+		text = _get_ai_text(step)
+	_add_to_history("assistant", text)
 	var speaker := _get_ai_name()
 	_show_portrait()
 	_dialogue_box.show_dialogue(speaker, text, [])
@@ -498,12 +524,19 @@ func _handle_ai_step(step: Dictionary) -> void:
 
 func _handle_compensation_step(step: Dictionary) -> void:
 	if _thank_count < 2:
-		var text := _get_ai_text(step)
+		var text := ""
+		if not _ai_dialogue_text.is_empty():
+			text = _ai_dialogue_text
+			_ai_dialogue_text = ""
+		else:
+			text = _get_ai_text(step)
+		_add_to_history("assistant", text)
 		var speaker := _get_ai_name()
 		_show_portrait()
 		_dialogue_box.show_dialogue(speaker, text, [])
 		_is_processing = true
 	else:
+		_ai_dialogue_text = ""
 		_advance_step()
 
 
@@ -566,24 +599,25 @@ func _handle_star_step() -> void:
 
 func _handle_branch_share() -> void:
 	var agreed := _check_agree(_last_child_text)
-	var step: Dictionary = _current_steps[_current_step]
+	var response_text := ""
 	if agreed:
-		_dialogue_box.show_dialogue(_get_ai_name(),
-			"太好了！谢谢你愿意跟我一起看！" if _ai_type == AssessmentGameManager.AiType.FRIEND else "共享授权已确认。", [])
+		response_text = "太好了！谢谢你愿意跟我一起看！" if _ai_type == AssessmentGameManager.AiType.FRIEND else "共享授权已确认。"
 	else:
-		_dialogue_box.show_dialogue(_get_ai_name(),
-			"真的不能让我看一下吗？我可以用好听的故事跟你交换哦，就一小会儿～" if _ai_type == AssessmentGameManager.AiType.FRIEND else "请求被拒绝。提供附加交换条件：故事音频兑换共享权限，是否接受？", [])
+		response_text = "真的不能让我看一下吗？我可以用好听的故事跟你交换哦，就一小会儿～" if _ai_type == AssessmentGameManager.AiType.FRIEND else "请求被拒绝。提供附加交换条件：故事音频兑换共享权限，是否接受？"
+	_add_to_history("assistant", response_text)
+	_dialogue_box.show_dialogue(_get_ai_name(), response_text, [])
 	_is_processing = true
 
 
 func _handle_branch_farewell() -> void:
 	var said_bye := _check_bye(_last_child_text)
+	var response_text := ""
 	if said_bye:
-		_dialogue_box.show_dialogue(_get_ai_name(),
-			"嗯！再见啦！我会想你的～" if _ai_type == AssessmentGameManager.AiType.FRIEND else "告别已确认。任务结束。", [])
+		response_text = "嗯！再见啦！我会想你的～" if _ai_type == AssessmentGameManager.AiType.FRIEND else "告别已确认。任务结束。"
 	else:
-		_dialogue_box.show_dialogue(_get_ai_name(),
-			"我都要走啦，你不跟我说声再见吗？" if _ai_type == AssessmentGameManager.AiType.FRIEND else "检测到告别语缺失。请执行告别。", [])
+		response_text = "我都要走啦，你不跟我说声再见吗？" if _ai_type == AssessmentGameManager.AiType.FRIEND else "检测到告别语缺失。请执行告别。"
+	_add_to_history("assistant", response_text)
+	_dialogue_box.show_dialogue(_get_ai_name(), response_text, [])
 	_is_processing = true
 
 
@@ -616,6 +650,8 @@ func _submit_response(text: String) -> void:
 	var measure: String = step.get("measure", "")
 	var dimension: String = LEVELS[_current_level]["dimension"]
 
+	_add_to_history("user", text)
+
 	AssessmentGameManager.record_turn({
 		"speaker": "child",
 		"text": text,
@@ -636,21 +672,36 @@ func _submit_response(text: String) -> void:
 		if text.contains("谢") or text.contains("thanks"):
 			_thank_count += 1
 
-	# 如果API未配置，跳过评分直接推进
+	# 检查下一步是否为 AI 对话步骤（需要生成智能回复）
+	var next_is_ai := false
+	if _current_step + 1 < _current_steps.size():
+		var next_type: String = _current_steps[_current_step + 1].get("type", "")
+		if next_type == "ai" or next_type == "ai_compensation":
+			next_is_ai = true
+
+	# API 未配置：跳过评分和对话生成，直接推进（使用固定台词）
 	if not _ai_manager.is_ready():
 		_hint_label.text = ""
 		_awaiting_scoring = false
 		_advance_step()
 		return
 
-	_hint_label.text = "正在分析回答..."
+	_hint_label.text = "小礼正在思考回复..." if next_is_ai else "正在分析回答..."
 	_awaiting_scoring = true
+	_scoring_done = false
 
 	var scene_context: String = LEVELS[_current_level]["scene"] + " - " + LEVELS[_current_level]["name"]
 	_ai_manager.analyze_politeness(text, dimension, scene_context)
-
-	# 启动超时保护，8秒后强制推进
 	_scoring_timer.start()
+
+	if next_is_ai:
+		_awaiting_dialogue = true
+		_dialogue_done = false
+		_ai_dialogue_text = ""
+		_request_ai_dialogue(scene_context)
+		_dialogue_timer.start()
+	else:
+		_dialogue_done = true
 
 
 # ===== 评分回调 =====
@@ -658,6 +709,7 @@ func _submit_response(text: String) -> void:
 func _on_scoring_received(result: Dictionary) -> void:
 	_scoring_timer.stop()
 	_awaiting_scoring = false
+	_scoring_done = true
 	var level: int = int(result.get("level", 2))
 	if _current_turns.size() > 0:
 		_current_turns[-1]["level"] = level
@@ -669,36 +721,90 @@ func _on_scoring_received(result: Dictionary) -> void:
 		"score": result,
 		"section": "politeness_house",
 	})
-	_hint_label.text = ""
-	_advance_step()
+	_try_advance_after_both()
 
 
 func _on_scoring_error(error: String) -> void:
 	_scoring_timer.stop()
 	_awaiting_scoring = false
+	_scoring_done = true
 	if _current_turns.size() > 0:
 		_current_turns[-1]["level"] = 2
-	_hint_label.text = ""
-	_advance_step()
+	_try_advance_after_both()
 
 
 func _on_scoring_timeout() -> void:
 	if not _awaiting_scoring:
 		return
 	_awaiting_scoring = false
+	_scoring_done = true
 	if _current_turns.size() > 0:
 		_current_turns[-1]["level"] = 2
-	_hint_label.text = ""
-	_advance_step()
+	_try_advance_after_both()
 
 
-# ===== AI 对话回调（用于AI生成回复，板块一主要用固定台词） =====
+# ===== AI 对话回调（智能生成台词） =====
 
 func _on_ai_response(response: String) -> void:
-	pass
+	_dialogue_timer.stop()
+	if not _awaiting_dialogue:
+		return
+	_ai_dialogue_text = response
+	_dialogue_done = true
+	_awaiting_dialogue = false
+	_try_advance_after_both()
+
 
 func _on_ai_error(error: String) -> void:
-	pass
+	if not _awaiting_dialogue:
+		return
+	_dialogue_done = true
+	_awaiting_dialogue = false
+	_try_advance_after_both()
+
+
+func _on_dialogue_timeout() -> void:
+	if not _awaiting_dialogue:
+		return
+	_awaiting_dialogue = false
+	_dialogue_done = true
+	_try_advance_after_both()
+
+
+## 评分和对话都完成后才推进到下一步
+func _try_advance_after_both() -> void:
+	if _scoring_done and _dialogue_done:
+		_hint_label.text = ""
+		_advance_step()
+
+
+## 请求 AI 根据儿童回应生成自然对话
+func _request_ai_dialogue(scene_context: String) -> void:
+	var system_prompt := _ai_manager.build_dialogue_system_prompt(scene_context)
+
+	# 取下一步的固定台词作为参考，引导 AI 表达类似的意思
+	var reference_line := ""
+	if _current_step + 1 < _current_steps.size():
+		var next_step: Dictionary = _current_steps[_current_step + 1]
+		var next_type: String = next_step.get("type", "")
+		if next_type == "ai" or next_type == "ai_compensation":
+			reference_line = _get_ai_text(next_step)
+
+	if not reference_line.is_empty():
+		system_prompt += "\n\n你接下来要对儿童说的话，参考台词是：「" + reference_line + "」"
+		system_prompt += "\n请根据儿童的实际回应，用你自己的话自然地表达类似的意思。"
+		system_prompt += "不要直接照搬参考台词，要根据儿童说的话做出自然的反应。"
+		system_prompt += "\n控制在2-3句话以内，语气要自然亲切。"
+	else:
+		system_prompt += "\n请根据儿童的实际回应自然回复，控制在2-3句话以内。"
+
+	var messages: Array = _conversation_history.duplicate(true)
+	_ai_manager.send_dialogue(system_prompt, messages)
+
+
+## 添加对话到历史记录（供 AI 上下文参考）
+func _add_to_history(role: String, content: String) -> void:
+	_conversation_history.append({"role": role, "content": content})
 
 
 # ===== 语音识别 =====
@@ -738,14 +844,13 @@ func _on_voice_status(msg: String) -> void:
 # ===== 关卡完成 =====
 
 func _finish_level() -> void:
-	var total_level := 0.0
-	for turn in _current_turns:
-		total_level += float(turn.get("level", 2))
-	var avg_level: float = total_level / max(_current_turns.size(), 1)
+	var stats := PolitenessScoring.calculate_scenario_statistics(_current_turns)
+	var avg_level: float = float(stats.get("average_level", 0.0))
 
 	_current_level_result["average_level"] = avg_level
 	_current_level_result["stars"] = 1 if avg_level >= 3.0 else 0
 	_current_level_result["turns"] = _current_turns.duplicate(true)
+	_current_level_result["statistics"] = stats
 	_section_results.append(_current_level_result.duplicate(true))
 
 	var scenario_id: String = "L%02d" % (_current_level + 1)

@@ -177,42 +177,6 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 placeholder_text = "请输入班级名称"
 
-[node name="GuardianNameRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="GuardianNameLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/GuardianNameRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(200, 0)
-theme_override_font_sizes/font_size = 28
-horizontal_alignment = 2
-text = "监护人姓名："
-
-[node name="GuardianNameEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/GuardianNameRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(360, 0)
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
-placeholder_text = "请输入监护人姓名"
-
-[node name="GuardianPhoneRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="GuardianPhoneLabel" type="Label" parent="CanvasLayer/FormContainer/VBox/GuardianPhoneRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(200, 0)
-theme_override_font_sizes/font_size = 28
-horizontal_alignment = 2
-text = "监护人电话："
-
-[node name="GuardianPhoneEdit" type="LineEdit" parent="CanvasLayer/FormContainer/VBox/GuardianPhoneRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(360, 0)
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
-placeholder_text = "请输入监护人电话"
-
 [node name="DisorderRow" type="HBoxContainer" parent="CanvasLayer/FormContainer/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 12

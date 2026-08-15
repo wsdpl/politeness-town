@@ -221,6 +221,79 @@ static func calculate_contextual_adaptation(turns: Array) -> Dictionary:
 	}
 
 
+## 计算单个场景/任务的完整统计指标。
+## 按任务书要求，每个游戏独立记录：礼貌标记词总频次、各类型标记词分项频次、
+## 每分钟礼貌标记词频次、五级策略平均等级、各等级出现频次及比例、互动总时长、话轮总数。
+## [param turns] 该场景下所有儿童发言轮次（Dictionary 数组，需含 text/level/timestamp 等字段）
+## 返回包含全部统计指标的字典
+static func calculate_scenario_statistics(turns: Array) -> Dictionary:
+	var turn_count := turns.size()
+	var duration_minutes := _calculate_duration_minutes(turns)
+
+	# 礼貌标记词总频次与各维度分项频次
+	var marker_total_count := 0
+	var marker_type_counts: Dictionary = {}
+	for dim in MARKER_LIBRARY.keys():
+		var dim_count := 0
+		for turn in turns:
+			if turn is Dictionary:
+				dim_count += _count_markers_in_dimension(_extract_text(turn), dim)
+		marker_type_counts[dim] = dim_count
+		marker_total_count += dim_count
+
+	# 每分钟礼貌标记词频次
+	var marker_frequency := 0.0
+	if duration_minutes > 0.0:
+		marker_frequency = float(marker_total_count) / duration_minutes
+
+	# 五级策略等级分布
+	var level_distribution: Dictionary = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+	var level_sum := 0.0
+	var scored_count := 0
+	for turn in turns:
+		if not (turn is Dictionary):
+			continue
+		var level: int = int(turn.get("level", 0))
+		if level > 0:
+			if level_distribution.has(level):
+				level_distribution[level] = int(level_distribution[level]) + 1
+			else:
+				level_distribution[level] = 1
+			level_sum += float(level)
+			scored_count += 1
+		else:
+			# 未存储 level 时实时评分
+			var result := score_response(_extract_text(turn), String(turn.get("dimension", "")))
+			level = int(result["level"])
+			if level_distribution.has(level):
+				level_distribution[level] = int(level_distribution[level]) + 1
+			else:
+				level_distribution[level] = 1
+			level_sum += float(level)
+			scored_count += 1
+
+	var average_level := 0.0
+	if scored_count > 0:
+		average_level = level_sum / float(scored_count)
+
+	# 各等级使用比例
+	var level_proportions: Dictionary = {}
+	for lv in level_distribution.keys():
+		var cnt := int(level_distribution[lv])
+		level_proportions[lv] = float(cnt) / float(scored_count) if scored_count > 0 else 0.0
+
+	return {
+		"marker_total_count": marker_total_count,
+		"marker_type_counts": marker_type_counts,
+		"marker_frequency": marker_frequency,
+		"average_level": average_level,
+		"level_distribution": level_distribution,
+		"level_proportions": level_proportions,
+		"duration_minutes": duration_minutes,
+		"turn_count": turn_count,
+	}
+
+
 ## 计算礼貌用语稳定性（各轮等级的标准差，数值越小越稳定）。
 static func calculate_stability(turns: Array) -> float:
 	if turns.size() < 2:

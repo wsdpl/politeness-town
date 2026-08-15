@@ -61,8 +61,6 @@ func register_child(info: Dictionary) -> void:
 		"gender": String(info.get("gender", "male")),
 		"school": String(info.get("school", "")),
 		"class_name": String(info.get("class_name", "")),
-		"guardian_name": String(info.get("guardian_name", "")),
-		"guardian_phone": String(info.get("guardian_phone", "")),
 		"has_language_disorder": bool(info.get("has_language_disorder", false)),
 		"device_usage_level": String(info.get("device_usage_level", "normal"))
 	}
@@ -143,6 +141,7 @@ func get_ai_type() -> AiType:
 ## 设置 AI 类型
 func set_ai_type(ai_type: AiType) -> void:
 	_ai_type = ai_type
+	_child_info["ai_type"] = get_ai_type_name()
 
 ## 获取所有轮次记录
 func get_all_turns() -> Array[Dictionary]:

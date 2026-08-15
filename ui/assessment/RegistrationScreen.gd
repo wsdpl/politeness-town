@@ -13,8 +13,6 @@ extends Control
 @onready var _gender_option: OptionButton = $CanvasLayer/FormContainer/VBox/GenderRow/GenderOption
 @onready var _school_edit: LineEdit = $CanvasLayer/FormContainer/VBox/SchoolRow/SchoolEdit
 @onready var _class_edit: LineEdit = $CanvasLayer/FormContainer/VBox/ClassRow/ClassEdit
-@onready var _guardian_name_edit: LineEdit = $CanvasLayer/FormContainer/VBox/GuardianNameRow/GuardianNameEdit
-@onready var _guardian_phone_edit: LineEdit = $CanvasLayer/FormContainer/VBox/GuardianPhoneRow/GuardianPhoneEdit
 @onready var _disorder_check_box: CheckBox = $CanvasLayer/FormContainer/VBox/DisorderRow/DisorderCheckBox
 @onready var _device_option: OptionButton = $CanvasLayer/FormContainer/VBox/DeviceRow/DeviceOption
 @onready var _ai_type_option: OptionButton = $CanvasLayer/FormContainer/VBox/AiTypeRow/AiTypeOption
@@ -124,8 +122,6 @@ func _collect_form_data() -> Dictionary:
 		"gender": _selected_gender(),
 		"school": _school_edit.text.strip_edges(),
 		"class_name": _class_edit.text.strip_edges(),
-		"guardian_name": _guardian_name_edit.text.strip_edges(),
-		"guardian_phone": _guardian_phone_edit.text.strip_edges(),
 		"has_language_disorder": _disorder_check_box.button_pressed,
 		"device_usage_level": _selected_device_level(),
 	}
