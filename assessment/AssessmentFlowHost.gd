@@ -4,6 +4,7 @@ extends Node
 
 const SCENE_PATHS := {
 	"registration": "res://ui/assessment/RegistrationScreen.tscn",
+	"warmup": "res://ui/assessment/WarmupScreen.tscn",
 	"provider_setup": "res://ui/assessment/ProviderSetupScreen.tscn",
 	"politeness_house": "res://ui/rpg/PolitenessHouseRpg.tscn",
 	"sunshine_market": "res://ui/rpg/SunshineMarketRpg.tscn",
@@ -75,6 +76,10 @@ func change_scene(scene_name: String) -> void:
 ## 从注册页直接进入板块一
 func go_to_politeness_house() -> void:
 	await change_scene("politeness_house")
+
+## 从注册页进入预热阶段。
+func go_to_warmup() -> void:
+	await change_scene("warmup")
 
 ## 从板块一进入板块二
 func go_to_sunshine_market() -> void:

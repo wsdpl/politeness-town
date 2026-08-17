@@ -77,7 +77,7 @@ func _populate_option_buttons() -> void:
 #  按钮事件
 # ============================================================
 
-## 点击"开始测评"：校验 → 收集数据 → 注册儿童 → 设置 AI 类型 → 直接进入板块一。
+## 点击"开始测评"：校验 → 收集数据 → 注册儿童 → 设置 AI 类型 → 进入预热阶段。
 func _on_start_button_pressed() -> void:
 	if not _validate_form():
 		return
@@ -85,9 +85,9 @@ func _on_start_button_pressed() -> void:
 	var info := _collect_form_data()
 	AssessmentGameManager.register_child(info)
 	AssessmentGameManager.set_ai_type(_selected_ai_type())
-	AssessmentGameManager.start_politeness_house()
 
-	await AssessmentFlowHost.go_to_politeness_house()
+	AssessmentGameManager.start_warmup()
+	await AssessmentFlowHost.go_to_warmup()
 
 
 ## 点击“API设置”：跳转到 API 提供商设置场景。

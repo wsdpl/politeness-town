@@ -157,7 +157,14 @@ func _update_sprite_frame() -> void:
 
 
 func _update_interact_prompt() -> void:
-	var has_npc := _nearby_npcs.size() > 0
+	var has_npc := false
+	for npc in _nearby_npcs:
+		if npc == null or not is_instance_valid(npc):
+			continue
+		if npc.has_method("is_interactable") and not npc.is_interactable():
+			continue
+		has_npc = true
+		break
 	_interact_prompt.visible = has_npc
 
 
@@ -175,6 +182,8 @@ func _get_nearest_npc() -> Node:
 	var min_dist := INF
 	for npc in _nearby_npcs:
 		if npc == null or not is_instance_valid(npc):
+			continue
+		if npc.has_method("is_interactable") and not npc.is_interactable():
 			continue
 		var dist := global_position.distance_to(npc.global_position)
 		if dist < min_dist:

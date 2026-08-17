@@ -212,7 +212,7 @@ func _find_weakest_dimension(per_dimension: Array) -> String:
 func _calculate_level_distribution(turns: Array) -> Array[float]:
 	var counts: Array[float] = [0.0, 0.0, 0.0, 0.0, 0.0]
 	for turn in turns:
-		if not (turn is Dictionary):
+		if not (turn is Dictionary) or not PolitenessScoring._is_child_turn(turn):
 			continue
 		var level: int = int(turn.get("level", 0))
 		if level <= 0:
@@ -232,7 +232,7 @@ func _calculate_marker_type_counts(turns: Array) -> Dictionary:
 	for dim in PolitenessScoring.CORE_DIMENSIONS:
 		counts[dim] = 0
 	for turn in turns:
-		if not (turn is Dictionary):
+		if not (turn is Dictionary) or not PolitenessScoring._is_child_turn(turn):
 			continue
 		var text := PolitenessScoring._extract_text(turn)
 		for dim in PolitenessScoring.CORE_DIMENSIONS:
@@ -360,7 +360,7 @@ func _on_export_button_pressed() -> void:
 	var turn_count := 0
 	if report.has("turns") and report["turns"] is Array:
 		turn_count = (report["turns"] as Array).size()
-	_show_dialog("导出报告", "JSON报告已导出成功！\n会话ID：%s\n轮次数：%d" % [session_id, turn_count])
+	_show_dialog("导出报告", "JSON数据和可打印HTML报告已导出！\n会话ID：%s\n轮次数：%d" % [session_id, turn_count])
 
 
 func _on_export_csv_button_pressed() -> void:
@@ -369,7 +369,7 @@ func _on_export_csv_button_pressed() -> void:
 	if csv_path.is_empty():
 		_show_dialog("导出CSV", "导出失败：未找到会话数据（会话ID：%s）。" % session_id)
 		return
-	_show_dialog("导出CSV", "CSV数据已导出成功！\n文件路径：%s" % csv_path)
+	_show_dialog("导出CSV", "Excel兼容CSV已导出成功！\n文件路径：%s" % csv_path)
 
 
 func _on_restart_button_pressed() -> void:

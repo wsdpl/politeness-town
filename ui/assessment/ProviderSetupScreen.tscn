@@ -52,7 +52,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 text = "API 设置"
 
-[node name="FormCenter" type="CenterContainer" parent="CanvasLayer"]
+[node name="FormCenter" type="ScrollContainer" parent="CanvasLayer"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -61,9 +61,12 @@ offset_top = 140.0
 offset_bottom = -240.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
 
 [node name="FormContainer" type="VBoxContainer" parent="CanvasLayer/FormCenter"]
 layout_mode = 2
+size_flags_horizontal = 4
 theme_override_constants/separation = 16
 
 [node name="EndpointRow" type="HBoxContainer" parent="CanvasLayer/FormCenter/FormContainer"]

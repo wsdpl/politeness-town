@@ -5,6 +5,7 @@
 # Build artifacts
 build/
 installer/
+build.zip
 
 # OS files
 .DS_Store
@@ -21,7 +22,14 @@ desktop.ini
 
 # Templates and temp files
 *.tpz
+*.log
 find_*.ps1
 take_screenshot.ps1
 *_screen.png
 *_screen.png.import
+temp_docx/
+tts_test.gd
+
+# Server dependencies and local configuration
+server/node_modules/
+server/.env

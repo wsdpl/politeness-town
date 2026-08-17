@@ -117,10 +117,13 @@ func is_rpg_npc() -> bool:
 ## 设置是否可交互
 func set_active(active: bool) -> void:
 	_is_active = active
-	_interact_area.monitoring = active
-	_interact_area.monitorable = active
 	modulate.a = 1.0 if active else 0.4
 	_hint_label.visible = false
+
+
+## 是否可交互（供玩家检测）
+func is_interactable() -> bool:
+	return _is_active
 
 
 ## 设置交互中状态

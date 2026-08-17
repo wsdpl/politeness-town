@@ -183,7 +183,7 @@ func _on_input_field_text_submitted(_text: String) -> void:
 
 func _on_continue_button_pressed() -> void:
 	AssessmentGameManager.start_politeness_house()
-	AssessmentFlowHost.go_to_politeness_house()
+	await AssessmentFlowHost.go_to_politeness_house()
 
 
 # ============================================================
@@ -210,7 +210,7 @@ func _send_current_input() -> void:
 
 	InputField.clear()
 	_set_input_enabled(false)
-	StatusLabel.text = "AI 正在回复…"
+	StatusLabel.text = "小礼 正在回复…"
 
 	# 追加到多轮对话历史并请求 LLM
 	_dialogue_messages.append({"role": "user", "content": text})

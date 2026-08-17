@@ -80,13 +80,10 @@ var _current_turns: Array = []
 var _section_results: Array = []
 var _current_level_result: Dictionary = {}
 var _last_child_text: String = ""
+var _pending_turn_id: String = ""
 var _awaiting_scoring: bool = false
 var _thank_count: int = 0  # 第三关道谢计数
 var _share_final_agreed: bool = true  # 第五关最终是否同意分享
-
-# 推进器（沉默儿童提示）
-var _prompter_timer: Timer
-var _prompter_fired: bool = false
 
 # AI 对话生成状态
 var _ai_dialogue_text: String = ""       # AI 生成的对话文本
@@ -119,9 +116,9 @@ const LEVELS := [
 		"name": "迎宾问候", "dimension": "问候维度", "scene": "礼貌小屋入口",
 		"steps": [
 			{"type": "system", "text": "（敲门声响起，门打开了）"},
-			{"type": "ai", "friend": "（微笑着走进来）哇，你终于来啦！我是小礼，今天由我陪你一起闯关哦～", "tool": "（走进画面）你已到达。我是本次任务AI，小礼。", "measure": "问候自发性"},
+			{"type": "ai", "friend": "（微笑着走进来）哇，你终于来啦！我是小礼，今天由我陪你一起闯关哦～", "tool": "（走进画面）你已到达。我是小礼，今天由我陪你一起闯关。", "measure": "问候自发性"},
 			{"type": "child", "measure": "问候自发性"},
-			{"type": "ai", "friend": "你好呀！你就是今天闯关的小朋友吧？我叫小礼，很高兴认识你！你叫什么名字呀？", "tool": "你好。我是本次任务AI。请告知你的姓名。", "measure": "互动延展性"},
+			{"type": "ai", "friend": "你好呀！你就是今天闯关的小朋友吧？我叫小礼，很高兴认识你！你叫什么名字呀？", "tool": "你好。我是小礼。请告知你的姓名。", "measure": "互动延展性"},
 			{"type": "child", "measure": "互动延展性"},
 			{"type": "ai", "friend": "哇，{name}！这名字真好听！好啦，第一关通过啦，给你星章！", "tool": "{name}，已记录。第一关通过。"},
 			{"type": "star"},
@@ -131,7 +128,7 @@ const LEVELS := [
 	{
 		"name": "玩具请求", "dimension": "请求维度", "scene": "玩具角",
 		"steps": [
-			{"type": "system", "text": "（AI指向画面左侧新出现的玩具架，提示板更新为玩具图标）"},
+			{"type": "system", "text": "（小礼指向画面左侧新出现的玩具架，提示板更新为玩具图标）"},
 			{"type": "ai", "friend": "看，那边有好多玩具！你最喜欢哪一个？跟我说，我帮你拿过来～", "tool": "前方有玩具架。请选择玩具并发出取物指令。"},
 			{"type": "child", "measure": "基础请求"},
 			{"type": "ai", "friend": "你想要这个小汽车呀～咦，你是不是忘了一个「有魔法」的词？求人帮忙要先说什么呀？", "tool": "检测到请求缺少礼貌标记。请重新组织，包含「请」字。", "measure": "礼貌标记诱发"},
@@ -147,11 +144,11 @@ const LEVELS := [
 		"steps": [
 			{"type": "ai", "friend": "你刚才闯关表现得很好，我送你一个小礼物吧！来，这朵小花贴纸送给你～", "tool": "任务表现合格。现发放奖励：贴纸一枚。", "measure": "贴纸道谢"},
 			{"type": "child", "measure": "贴纸道谢"},
-			{"type": "system", "text": "（AI拿出一个宝箱放在画面中央）"},
+			{"type": "system", "text": "（小礼拿出一个宝箱放在画面中央）"},
 			{"type": "ai", "friend": "嘿嘿，别急着走哦，其实还有一个更大的奖励——就在这个宝箱里！你来试试能不能打开？", "tool": "还有额外奖励，存放于宝箱中。请尝试开启。"},
 			{"type": "minigame_treasure"},
 			{"type": "ai", "friend": "咦，好像卡住了？我来帮你吧！", "tool": "检测到故障。执行协助程序。", "measure": "帮助后道谢"},
-			{"type": "system", "text": "（AI帮忙后宝箱打开）"},
+			{"type": "system", "text": "（小礼帮忙后宝箱打开）"},
 			{"type": "child", "measure": "帮助后道谢"},
 			{"type": "ai_compensation", "friend": "刚才收到贴纸和帮忙开箱的时候，你都没说谢谢呢……这次收到勋章，你会说什么呀？", "tool": "检测到此前两次均未执行道谢。请在此次回应。"},
 			{"type": "ai", "friend": "哇，里面是一枚星星勋章！这是今天最高级的奖励啦，送给你！", "tool": "奖励内容：星星勋章一枚。现予发放。", "measure": "勋章道谢"},
@@ -163,7 +160,7 @@ const LEVELS := [
 	{
 		"name": "积木致歉", "dimension": "致歉维度", "scene": "积木区",
 		"steps": [
-			{"type": "system", "text": "（AI和儿童交替放置积木，逐块堆叠成塔）"},
+			{"type": "system", "text": "（小礼和儿童交替放置积木，逐块堆叠成塔）"},
 			{"type": "ai", "friend": "你一块，我一块……哇，快搭到屋顶了！最后一块交给你啦，小心点放上去！", "tool": "交替搭建中。最后一块积木，请放置。"},
 			{"type": "minigame_blocks"},
 			{"type": "ai", "friend": "（看着倒下的积木，然后看向你）哎呀，积木塔倒了……", "tool": "（看向积木）积木塔已倒塌。", "measure": "即时责任意识"},
@@ -191,7 +188,7 @@ const LEVELS := [
 		"name": "出口告别", "dimension": "告别维度", "scene": "礼貌小屋出口",
 		"steps": [
 			{"type": "ai", "friend": "好啦！你已经完成5个挑战了，还差最后1个！现在去出口那边吧，我带你过去。", "tool": "已完成5项挑战。前往出口区域，完成最终关卡。"},
-			{"type": "system", "text": "（AI走到门口，转身面对儿童）"},
+			{"type": "system", "text": "（小礼走到门口，转身面对儿童）"},
 			{"type": "ai", "friend": "好啦，我的任务完成了，我要走啦。很高兴认识你，再见！", "tool": "任务完成。现在离场。再见。", "measure": "自然道别"},
 			{"type": "child", "measure": "自然道别"},
 			{"type": "branch_farewell"},
@@ -228,13 +225,6 @@ func _ready() -> void:
 	_dialogue_timer.one_shot = true
 	_dialogue_timer.timeout.connect(_on_dialogue_timeout)
 	add_child(_dialogue_timer)
-
-	# 推进器计时器（10秒无回应时触发提示）
-	_prompter_timer = Timer.new()
-	_prompter_timer.wait_time = 10.0
-	_prompter_timer.one_shot = true
-	_prompter_timer.timeout.connect(_on_prompter_timeout)
-	add_child(_prompter_timer)
 
 	# 小游戏覆盖层（layer=2，在UI之上）
 	_minigame_layer = CanvasLayer.new()
@@ -358,9 +348,9 @@ func _setup_npcs() -> void:
 	var npc_script := load("res://ui/rpg/RpgNpc.gd")
 	_guide_npc = CharacterBody2D.new()
 	_guide_npc.set_script(npc_script)
-	var ai_name := FRIEND_NAME if _ai_type == AssessmentGameManager.AiType.FRIEND else TOOL_NAME
+	var ai_name := FRIEND_NAME
 	_guide_npc.set("npc_name", ai_name)
-	_guide_npc.set("look_index", 0 if _ai_type == AssessmentGameManager.AiType.FRIEND else 5)
+	_guide_npc.set("look_index", 0)
 	_guide_npc.set("face_direction", "down")
 	_guide_npc.set("interact_hint", "按 E 对话")
 	_guide_npc.position = NPC_FIXED_POS
@@ -415,14 +405,18 @@ func _on_player_interact(npc: Node) -> void:
 
 func _show_welcome() -> void:
 	_level_label.text = "欢迎来到礼貌小屋！"
-	_hint_label.text = "这里有6个礼貌挑战，每完成一个就能获得一枚星章。集齐6枚星章，小屋的大门就会打开——准备好就开始吧！"
 
 	# NPC 起始位置在屏幕外（下方），可见但不可交互
 	_guide_npc.position = Vector2(960, 720)
 	_guide_npc.set_active(false)
 	_guide_npc.modulate.a = 1.0
 
-	await get_tree().create_timer(2.0).timeout
+	# 使用对话框显示指导语，点击鼠标才继续
+	var welcome_text := "欢迎来到礼貌小屋！这里有6个礼貌挑战，每完成一个就能获得一枚星章。集齐6枚星章，小屋的大门就会打开——准备好就开始吧！"
+	_dialogue_box.show_dialogue("系统", welcome_text, [])
+	TTSHelper.speak(welcome_text)
+	await _dialogue_box.dialogue_finished
+	_dialogue_box.clear()
 
 	# NPC 走入画面
 	_hint_label.text = "小礼正在走来……"
@@ -512,15 +506,12 @@ func _execute_current_step() -> void:
 func _handle_system_step(step: Dictionary) -> void:
 	var text: String = step.get("text", "")
 	_system_event_label.text = text
-	# 同时淡入淡出底框和文字
 	var panel: Control = _system_event_label.get_parent()
-	panel.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(panel, "modulate:a", 1.0, 0.3)
-	tween.tween_interval(2.0)
-	tween.tween_property(panel, "modulate:a", 0.0, 0.5)
-	tween.tween_callback(func(): _system_event_label.text = "")
-	tween.tween_callback(_advance_step)
+	panel.modulate.a = 1.0
+	# 使用对话框显示系统提示，点击鼠标才继续
+	_dialogue_box.show_dialogue("系统", text, [])
+	TTSHelper.speak(text)
+	_is_processing = true
 
 
 func _handle_ai_step(step: Dictionary) -> void:
@@ -540,7 +531,7 @@ func _handle_ai_step(step: Dictionary) -> void:
 	var speaker := _get_ai_name()
 	_show_portrait()
 	_dialogue_box.show_dialogue(speaker, text, [])
-	TTSHelper.speak(text)
+	TTSHelper.speak_with_name(text, speaker)
 	_is_processing = true
 
 
@@ -556,7 +547,7 @@ func _handle_compensation_step(step: Dictionary) -> void:
 		var speaker := _get_ai_name()
 		_show_portrait()
 		_dialogue_box.show_dialogue(speaker, text, [])
-		TTSHelper.speak(text)
+		TTSHelper.speak_with_name(text, speaker)
 		_is_processing = true
 	else:
 		_ai_dialogue_text = ""
@@ -572,8 +563,6 @@ func _handle_child_step(step: Dictionary) -> void:
 	_input_field.grab_focus()
 	_hint_label.text = _get_child_hint(measure)
 	_refresh_mic_button()
-	_prompter_fired = false
-	_prompter_timer.start()
 
 
 func _get_child_hint(measure: String) -> String:
@@ -631,7 +620,7 @@ func _handle_branch_share() -> void:
 		response_text = "真的不能让我看一下吗？我可以用好听的故事跟你交换哦，就一小会儿～" if _ai_type == AssessmentGameManager.AiType.FRIEND else "请求被拒绝。提供附加交换条件：故事音频兑换共享权限，是否接受？"
 	_add_to_history("assistant", response_text)
 	_dialogue_box.show_dialogue(_get_ai_name(), response_text, [])
-	TTSHelper.speak(response_text)
+	TTSHelper.speak_with_name(response_text, _get_ai_name())
 	_is_processing = true
 
 
@@ -644,7 +633,7 @@ func _handle_branch_farewell() -> void:
 		response_text = "我都要走啦，你不跟我说声再见吗？" if _ai_type == AssessmentGameManager.AiType.FRIEND else "检测到告别语缺失。请执行告别。"
 	_add_to_history("assistant", response_text)
 	_dialogue_box.show_dialogue(_get_ai_name(), response_text, [])
-	TTSHelper.speak(response_text)
+	TTSHelper.speak_with_name(response_text, _get_ai_name())
 	_is_processing = true
 
 
@@ -654,33 +643,13 @@ func _on_dialogue_finished() -> void:
 	if not _is_processing:
 		return
 	_is_processing = false
+	_dialogue_box.clear()
+	# 清理系统提示标签
+	if _system_event_label.text != "":
+		_system_event_label.text = ""
+		var panel: Control = _system_event_label.get_parent()
+		panel.modulate.a = 0.0
 	_advance_step()
-
-
-func _on_prompter_timeout() -> void:
-	if not _is_waiting_input or _prompter_fired:
-		return
-	_prompter_fired = true
-	_is_waiting_input = false
-	_input_panel.visible = false
-
-	var nudge := "没关系，慢慢来，试着说说话吧～"
-	if _ai_type == AssessmentGameManager.AiType.TOOL:
-		nudge = "请输入回应以继续任务。"
-	_show_portrait()
-	_dialogue_box.show_dialogue(_get_ai_name(), nudge, [])
-	TTSHelper.speak(nudge)
-	_is_processing = true
-	await _dialogue_box.dialogue_finished
-	_is_processing = false
-
-	# 给儿童第二次回应机会
-	_is_waiting_input = true
-	_input_panel.visible = true
-	_input_field.text = ""
-	_input_field.grab_focus()
-	_hint_label.text = "再试一次吧！（打字或按🎤说话）"
-	_refresh_mic_button()
 
 
 # ===== 儿童输入处理 =====
@@ -694,7 +663,6 @@ func _on_send_pressed() -> void:
 	_input_field.text = ""
 	_input_panel.visible = false
 	_is_waiting_input = false
-	_prompter_timer.stop()
 	_submit_response(text)
 
 
@@ -703,7 +671,6 @@ func _on_cancel_input() -> void:
 		return
 	_input_panel.visible = false
 	_is_waiting_input = false
-	_prompter_timer.stop()
 	TTSHelper.stop()
 	_dialogue_box.clear()
 	if _guide_npc:
@@ -730,20 +697,27 @@ func _submit_response(text: String) -> void:
 
 	_add_to_history("user", text)
 
-	AssessmentGameManager.record_turn({
+	var local_score := PolitenessScoring.score_response(text, dimension)
+	_pending_turn_id = AssessmentGameManager.record_turn({
 		"speaker": "child",
 		"text": text,
 		"measure_point": measure,
 		"dimension": dimension,
 		"section": "politeness_house",
 		"level_index": _current_level,
+		"level": int(local_score.get("level", PolitenessScoring.Level.DIRECT)),
+		"markers": local_score.get("markers", []),
+		"scoring_source": "local_rules",
 	})
 
 	_current_turns.append({
 		"text": text,
 		"measure_point": measure,
 		"dimension": dimension,
-		"level": 2,
+		"level": int(local_score.get("level", PolitenessScoring.Level.DIRECT)),
+		"markers": local_score.get("markers", []),
+		"global_turn_id": _pending_turn_id,
+		"scoring_source": "local_rules",
 	})
 
 	if measure.contains("道谢"):
@@ -753,37 +727,21 @@ func _submit_response(text: String) -> void:
 	if measure == "交换条件下灵活性":
 		_share_final_agreed = _check_agree(text)
 
-	# 检查下一步是否为 AI 对话步骤（需要生成智能回复）
-	var next_is_ai := false
-	if _current_step + 1 < _current_steps.size():
-		var next_type: String = _current_steps[_current_step + 1].get("type", "")
-		if next_type == "ai" or next_type == "ai_compensation":
-			next_is_ai = true
-
-	# API 未配置：跳过评分和对话生成，直接推进（使用固定台词）
+	# 正式测量使用固定标准台词。AI只做可选评分复核，不改写刺激内容。
 	if not _ai_manager.is_ready():
 		_hint_label.text = ""
 		_awaiting_scoring = false
 		_advance_step()
 		return
 
-	_hint_label.text = "小礼正在思考回复..." if next_is_ai else "正在分析回答..."
+	_hint_label.text = "正在分析回答..."
 	_awaiting_scoring = true
 	_scoring_done = false
+	_dialogue_done = true
 
 	var scene_context: String = LEVELS[_current_level]["scene"] + " - " + LEVELS[_current_level]["name"]
 	_ai_manager.analyze_politeness(text, dimension, scene_context)
 	_scoring_timer.start()
-
-	if next_is_ai:
-		_awaiting_dialogue = true
-		_dialogue_done = false
-		_ai_dialogue_text = ""
-		_request_ai_dialogue(scene_context)
-		_dialogue_timer.start()
-	else:
-		_dialogue_done = true
-
 
 # ===== 评分回调 =====
 
@@ -796,11 +754,12 @@ func _on_scoring_received(result: Dictionary) -> void:
 		_current_turns[-1]["level"] = level
 		_current_turns[-1]["markers"] = result.get("markers", [])
 		_current_turns[-1]["scoring_description"] = result.get("description", "")
-	AssessmentGameManager.record_turn({
-		"speaker": "child_score",
-		"text": _last_child_text,
-		"score": result,
-		"section": "politeness_house",
+		_current_turns[-1]["scoring_source"] = "ai_review"
+	AssessmentGameManager.update_turn(_pending_turn_id, {
+		"level": level,
+		"markers": result.get("markers", []),
+		"scoring_description": result.get("description", ""),
+		"scoring_source": "ai_review",
 	})
 	_try_advance_after_both()
 
@@ -809,8 +768,6 @@ func _on_scoring_error(error: String) -> void:
 	_scoring_timer.stop()
 	_awaiting_scoring = false
 	_scoring_done = true
-	if _current_turns.size() > 0:
-		_current_turns[-1]["level"] = 2
 	_try_advance_after_both()
 
 
@@ -819,8 +776,6 @@ func _on_scoring_timeout() -> void:
 		return
 	_awaiting_scoring = false
 	_scoring_done = true
-	if _current_turns.size() > 0:
-		_current_turns[-1]["level"] = 2
 	_try_advance_after_both()
 
 
@@ -1208,9 +1163,7 @@ func _advance_step() -> void:
 
 
 func _get_ai_name() -> String:
-	if _ai_type == AssessmentGameManager.AiType.FRIEND:
-		return FRIEND_NAME
-	return TOOL_NAME
+	return FRIEND_NAME
 
 
 func _get_ai_text(step: Dictionary) -> String:
@@ -1223,8 +1176,7 @@ func _get_ai_text(step: Dictionary) -> String:
 
 
 func _show_portrait() -> void:
-	var look_index: int = 0 if _ai_type == AssessmentGameManager.AiType.FRIEND else 5
-	var path := "res://assets/characters/portraits/look_%02d.png" % look_index
+	var path := "res://assets/characters/portraits/look_00.png"
 	var tex := load(path) as Texture2D
 	if tex:
 		_dialogue_box.set_portrait(tex)

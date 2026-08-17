@@ -19,12 +19,17 @@ config/icon="res://icon.png"
 
 driver/enable_input=true
 
+[assessment]
+
+server_upload_enabled=true
+
 [autoload]
 
 AssessmentFlowHost="*res://assessment/AssessmentFlowHost.gd"
 AssessmentGameManager="*res://assessment/AssessmentGameManager.gd"
 IFlytekSR="*res://assessment/IFlytekSpeechRecognition.gd"
 AssessmentUiTheme="*res://assessment/AssessmentUiTheme.gd"
+TTSService="*res://ui/DoubaoTTS.gd"
 
 [display]
 
@@ -33,6 +38,10 @@ window/size/viewport_height=1080
 window/size/resizable=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
 
 [gui]
 

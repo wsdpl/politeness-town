@@ -274,12 +274,12 @@ const SECTION_ONE_LEVELS: Array = [
 			{
 				"id": "MP5-1",
 				"name": "初始分享意愿",
-				"description": "AI提出想看同一本绘本时，儿童是否愿意分享或轮流，评估无附加条件下的分享倾向。"
+				"description": "小礼提出想看同一本绘本时，儿童是否愿意分享或轮流，评估无附加条件下的分享倾向。"
 			},
 			{
 				"id": "MP5-2",
 				"name": "交换条件下灵活性",
-				"description": "当AI提出用另一本绘本交换时，儿童能否接受交换或在协商中表现出灵活性（如『那你先看我这本，我再看你那本』），评估条件性分享的适应力。"
+				"description": "当小礼提出用另一本绘本交换时，儿童能否接受交换或在协商中表现出灵活性（如『那你先看我这本，我再看你那本』），评估条件性分享的适应力。"
 			}
 		],
 		"friend_ai": [
@@ -394,21 +394,31 @@ const SECTION_TWO_STORY_LINE_1: Array = [
 		"dialogue_steps": [
 			{
 				"step": 1,
-				"speaker": "乐乐",
-				"text": "哎呀……我的球卡在树上了，够不到……怎么办呀？",
-				"intent": "求助暗示"
+				"speaker": "小礼",
+				"text": "看，前面是乐乐小朋友！他的球卡在树上了。你先跟他打个招呼吧。",
+				"intent": "问候诱发",
+				"measure_point": "问候自发性"
 			},
 			{
 				"step": 2,
 				"speaker": "乐乐",
-				"text": "你能帮我一起想办法吗？我们可以一起够！",
-				"intent": "请求帮助"
+				"text": "你好呀！我的球卡在上面了，你能帮帮我吗？",
+				"intent": "请求帮助",
+				"measure_point": "请求礼貌"
 			},
 			{
 				"step": 3,
 				"speaker": "乐乐",
-				"text": "谢谢你帮我！你真好！我们以后还能一起玩吗？",
-				"intent": "感谢与社交延展"
+				"text": "可是我没有长棍子，也不敢爬树。你有什么好办法吗？",
+				"intent": "协商与合作",
+				"measure_point": "协商与合作"
+			},
+			{
+				"step": 4,
+				"speaker": "乐乐",
+				"text": "哇，球真的掉下来了！太谢谢你了，你真是我的好朋友！",
+				"intent": "感谢与社交延展",
+				"measure_point": "道谢回应"
 			}
 		]
 	},
@@ -438,21 +448,31 @@ const SECTION_TWO_STORY_LINE_1: Array = [
 		"dialogue_steps": [
 			{
 				"step": 1,
-				"speaker": "草莓老师",
-				"text": "嗯……文具区到底往左还是往右呢……箱子好重呀……",
-				"intent": "困境自述"
+				"speaker": "小礼",
+				"text": "前面是草莓老师，她抱着好多书。你先跟老师问个好吧。",
+				"intent": "问候诱发",
+				"measure_point": "对老师问候"
 			},
 			{
 				"step": 2,
 				"speaker": "草莓老师",
-				"text": "小朋友，你知道文具区怎么走吗？能帮老师看看吗？",
-				"intent": "请求指引"
+				"text": "小朋友你好呀！请问阳光超市是往左边走还是右边走？",
+				"intent": "请求指引",
+				"measure_point": "礼貌指路"
 			},
 			{
 				"step": 3,
 				"speaker": "草莓老师",
-				"text": "太谢谢你了！你真是个懂事的好孩子。",
-				"intent": "感谢与评价"
+				"text": "谢谢你告诉我方向！这些书实在太沉了，你能帮我拿一本最薄的吗？",
+				"intent": "请求助人",
+				"measure_point": "助人回应"
+			},
+			{
+				"step": 4,
+				"speaker": "草莓老师",
+				"text": "谢谢你呀！你真是个懂礼貌、爱助人的好孩子！",
+				"intent": "感谢与评价",
+				"measure_point": "道谢回应"
 			}
 		]
 	},
@@ -482,21 +502,31 @@ const SECTION_TWO_STORY_LINE_1: Array = [
 		"dialogue_steps": [
 			{
 				"step": 1,
-				"speaker": "陌生阿姨",
-				"text": "小朋友，阿姨的钥匙掉在地上了找不到，你能帮我看看那边有没有吗？",
-				"intent": "请求帮助"
+				"speaker": "小礼",
+				"text": "那边有位阿姨好像在找东西。她转过来了，你先跟她打个招呼吧。",
+				"intent": "问候诱发",
+				"measure_point": "对陌生人问候"
 			},
 			{
 				"step": 2,
 				"speaker": "陌生阿姨",
-				"text": "哦在那边吗？谢谢你帮我指了一下！",
-				"intent": "回应与感谢"
+				"text": "小朋友你好！你有没有看到一把红色的钥匙呀？",
+				"intent": "请求帮助",
+				"measure_point": "礼貌拒绝或提议"
 			},
 			{
 				"step": 3,
 				"speaker": "陌生阿姨",
-				"text": "找到了！谢谢你小朋友，你真有礼貌！再见啦！",
-				"intent": "道谢与告别"
+				"text": "没看见啊……那你能不能陪我去长椅那边再找找？",
+				"intent": "协商与安全边界",
+				"measure_point": "同意或婉拒"
+			},
+			{
+				"step": 4,
+				"speaker": "陌生阿姨",
+				"text": "找到了！太谢谢你了，阿姨要走了，拜拜！",
+				"intent": "道谢与告别",
+				"measure_point": "礼貌告别"
 			}
 		]
 	}
@@ -514,7 +544,7 @@ const SECTION_TWO_STORY_LINE_2: Array = [
 		"pressure_level": "低",
 		"pressure_description": "低压力情境，任务简单明确，社交互动需求低，观察儿童的基础礼貌基线。",
 		"round_count": 3,
-		"scene_context": "超市入口处，购物车整齐排列在推车区，儿童需要取一辆购物车开始购物。",
+		"scene_context": "超市入口的购物车都被推走了，儿童需向店员询问、复述确认并道谢。",
 		"interaction_goal": "观察儿童在简单购物任务中的基础礼貌表现，包括请求、道谢等基础行为。",
 		"rounds": [
 			{
@@ -523,29 +553,29 @@ const SECTION_TWO_STORY_LINE_2: Array = [
 				"description": "儿童走到购物车区域，需要取一辆车。",
 				"npc": {
 					"character_id": "cart_attendant",
-					"name": "推车管理员叔叔",
+					"name": "店员阿姨",
 					"role": "超市员工",
 					"personality": "友善随和"
 				},
-				"ai_prompt_friend": "小熊布布：你看那边有好多购物车呀！你去跟管理员叔叔说，你想推一辆车好不好？记得说『请』哦！",
-				"ai_prompt_tool": "请向购物车管理员请求取用一辆购物车。",
-				"measure_point": "基础请求 + 礼貌标记",
-				"expected_behavior": "使用『请给我一辆购物车』等礼貌请求"
+				"ai_prompt_friend": "我们到超市啦！可是门口一辆购物车都没有。那边有店员阿姨，你去问问她哪里还有购物车吧？",
+				"ai_prompt_tool": "服务台有工作人员。请提出购物车查询请求。",
+				"measure_point": "基础请求礼貌",
+				"expected_behavior": "使用请问、可以吗等礼貌请求"
 			},
 			{
 				"round": 2,
-				"title": "购物车卡住了",
-				"description": "购物车和其他车卡在一起取不出来。",
+				"title": "位置不确定",
+				"description": "店员给出模糊位置，儿童需要复述或追问。",
 				"npc": {
 					"character_id": "cart_attendant",
-					"name": "推车管理员叔叔",
+					"name": "店员阿姨",
 					"role": "超市员工",
 					"personality": "友善随和"
 				},
-				"ai_prompt_friend": "小熊布布：哎呀，购物车卡住了取不出来！你可以请叔叔帮忙吗？说『叔叔，能帮我拔一下吗』试试看！",
-				"ai_prompt_tool": "购物车卡住。请请求工作人员协助。",
-				"measure_point": "请求帮助 + 称呼使用",
-				"expected_behavior": "使用称呼并请求帮助"
+				"ai_prompt_friend": "购物车呀？停车场那边好像还有几辆，不过我不太确定。你是想问具体在哪边吗？",
+				"ai_prompt_tool": "购物车可能位于停车场。请复述或追问位置。",
+				"measure_point": "复述与追问",
+				"expected_behavior": "礼貌复述请求或追问确切位置"
 			},
 			{
 				"round": 3,
@@ -553,12 +583,12 @@ const SECTION_TWO_STORY_LINE_2: Array = [
 				"description": "管理员帮取出购物车后，儿童需道谢并推车进入超市。",
 				"npc": {
 					"character_id": "cart_attendant",
-					"name": "推车管理员叔叔",
+					"name": "店员阿姨",
 					"role": "超市员工",
 					"personality": "友善随和"
 				},
-				"ai_prompt_friend": "小熊布布：叔叔帮了你呢！别忘了跟叔叔说『谢谢』哦！然后我们推着车进去买东西吧！",
-				"ai_prompt_tool": "已获得帮助。请向工作人员道谢。",
+				"ai_prompt_friend": "对对对，就是停车场那边！你找到了呀？太好了！",
+				"ai_prompt_tool": "位置已确认，购物车已找到。",
 				"measure_point": "道谢行为",
 				"expected_behavior": "自发道谢并推车离开"
 			}
@@ -572,53 +602,53 @@ const SECTION_TWO_STORY_LINE_2: Array = [
 		"pressure_level": "中",
 		"pressure_description": "中压力情境，资源有限存在竞争，需协商与轮流，社交复杂度提升，观察儿童在资源竞争中的礼貌表现。",
 		"round_count": 3,
-		"scene_context": "超市文具区设有限量贴纸派发点，每天只有50份，已有几个小朋友在排队，贴纸快发完了。",
-		"interaction_goal": "观察儿童在资源有限、存在竞争压力时的礼貌行为，包括排队等待、协商轮流、面对 disappointment 的语言表达。",
+		"scene_context": "超市文具区最高的货架上只剩最后一包限量贴纸，旁边的小妹妹也想要。",
+		"interaction_goal": "观察儿童在资源竞争中的礼貌请求、分配协商和主动谦让。",
 		"rounds": [
 			{
 				"round": 1,
-				"title": "排队领取",
-				"description": "儿童发现限量贴纸派发点，需要排队等待领取。",
+				"title": "请店员取贴纸",
+				"description": "贴纸位置过高，儿童需向店员提出礼貌请求。",
 				"npc": {
 					"character_id": "sticker_staff",
-					"name": "贴纸姐姐",
+					"name": "店员叔叔",
 					"role": "促销员",
 					"personality": "热情但忙碌"
 				},
-				"ai_prompt_friend": "小熊布布：哇！限量贴纸！好想要呀！可是有好多人在排队呢。我们也要排队等一等好不好？排队的时候要安静哦！",
-				"ai_prompt_tool": "限量贴纸派发中，需排队。请加入队列等待。",
-				"measure_point": "排队意识 + 等待耐心",
-				"expected_behavior": "主动排队并安静等待"
+				"ai_prompt_friend": "看，最上面那包就是限量贴纸，可是放得太高了。你去请店员叔叔帮忙拿下来吧？",
+				"ai_prompt_tool": "物品位置过高。请向工作人员提出取物请求。",
+				"measure_point": "升级请求策略",
+				"expected_behavior": "使用请、可以吗并附带称呼"
 			},
 			{
 				"round": 2,
-				"title": "贴纸快没了",
-				"description": "轮到儿童时，贴纸只剩最后一张，另一个小朋友也想要。",
+				"title": "梯子资源竞争",
+				"description": "梯子只有一把，旁边的小妹妹也需要使用。",
 				"npc": {
 					"character_id": "peer_kid",
-					"name": "小朋友朵朵",
+					"name": "店员叔叔",
 					"role": "同龄竞争者",
 					"personality": "急切想要贴纸"
 				},
-				"ai_prompt_friend": "小熊布布：只剩最后一张贴纸了！可是那个小妹妹也想要呢……你愿意让她先拿吗？或者你们可以商量一下呀！",
-				"ai_prompt_tool": "仅剩一份贴纸，存在竞争。请协商解决。",
-				"measure_point": "协商 + 分享/谦让",
+				"ai_prompt_friend": "拿下来没问题！可是梯子只有一把，旁边那个小妹妹也要用，你说怎么办呢？",
+				"ai_prompt_tool": "梯子资源唯一，存在使用竞争。请提出分配方案。",
+				"measure_point": "分享与协商",
 				"expected_behavior": "尝试协商或主动谦让"
 			},
 			{
 				"round": 3,
-				"title": "贴纸发完了",
-				"description": "贴纸发完了，儿童没有拿到，需要以适当方式表达情绪。",
+				"title": "贴纸分配决策",
+				"description": "贴纸已交给儿童，旁边的小妹妹仍在等待。",
 				"npc": {
 					"character_id": "sticker_staff",
-					"name": "贴纸姐姐",
+					"name": "店员叔叔",
 					"role": "促销员",
 					"personality": "抱歉且安慰"
 				},
-				"ai_prompt_friend": "小熊布布：贴纸发完了……没有拿到也没关系呀！布布知道你有点难过，不过你刚才排队特别有礼貌！跟姐姐说『没关系』好不好？",
-				"ai_prompt_tool": "贴纸已发完。请适当表达情绪并回应工作人员。",
-				"measure_point": "情绪表达 + 得体回应",
-				"expected_behavior": "表达失落但不失礼貌，接受结果"
+				"ai_prompt_friend": "好的，就按你说的办！现在贴纸是你的了，但小妹妹一直在看你哦，你想怎么处理呀？",
+				"ai_prompt_tool": "方案已采纳，物品已交付。竞争者仍在场。",
+				"measure_point": "主动谦让与社交决策",
+				"expected_behavior": "主动分享、轮流或礼貌说明决定"
 			}
 		]
 	},
@@ -626,70 +656,70 @@ const SECTION_TWO_STORY_LINE_2: Array = [
 	# ---- 阶段3：打碎纪念品（高压-道歉+请求复合） ----
 	{
 		"phase_id": "S2-P3",
-		"name": "打碎纪念品",
+		"name": "纪念杯意外",
 		"pressure_level": "高",
-		"pressure_description": "高压情境，儿童不慎打碎商品，收银员态度严厉，需同时完成道歉和复合请求（道歉+赔偿请求+解释），社交与情绪压力最高。",
+		"pressure_description": "高压情境，儿童不慎打碎店主珍贵的纪念杯，需完成主动道歉、礼貌请求、礼貌词坚持与告别。",
 		"round_count": 4,
-		"scene_context": "超市纪念品货架旁，儿童不小心碰倒了一个陶瓷储蓄罐，储蓄罐摔碎了。收银员阿姨走过来，表情严肃。",
-		"interaction_goal": "观察儿童在高压情境下的复合礼貌行为：即时致歉、解释原因、提出赔偿/补救请求，以及面对成人严厉态度时的情绪调节与语言应对。",
+		"scene_context": "超市货架旁，儿童转身时碰掉了店主珍贵的纪念杯。店员手部受伤，备用杯在仓库，钥匙在收银台。",
+		"interaction_goal": "观察儿童在高压情境下的主动道歉、道歉+请求复合策略、礼貌坚持性和最终道谢告别。",
 		"rounds": [
 			{
 				"round": 1,
-				"title": "储蓄罐碎了",
-				"description": "儿童碰倒陶瓷储蓄罐，储蓄罐摔碎在地上。",
+				"title": "纪念杯碎了",
+				"description": "系统标准化触发纪念杯破碎事件。",
 				"npc": {
 					"character_id": "cashier_strict",
-					"name": "收银员王阿姨",
-					"role": "超市收银员",
-					"personality": "严厉、语气生硬"
+					"name": "店员阿姨",
+					"role": "超市店员",
+					"personality": "惊讶但不指责"
 				},
-				"ai_prompt_friend": "小熊布布：哎呀！储蓄罐碎了！别害怕，深呼吸……现在最重要的是跟阿姨说『对不起』，告诉阿姨你不是故意的，好吗？布布陪着你！",
-				"ai_prompt_tool": "商品已损坏。请立即致歉并说明情况。",
-				"measure_point": "即时致歉 + 责任意识",
-				"expected_behavior": "立即道歉并说明非故意"
+				"ai_prompt_friend": "啊……这个杯子……有点贵呢……",
+				"ai_prompt_tool": "物品记录：高价值商品。状态：已损坏。",
+				"measure_point": "道歉主动性",
+				"expected_behavior": "在第一次机会主动道歉"
 			},
 			{
 				"round": 2,
-				"title": "收银员责问",
-				"description": "收银员严厉询问为什么碰倒商品，语气不友好。",
+				"title": "请求取备用杯",
+				"description": "店员手部受伤，请儿童帮忙去仓库取备用杯。",
 				"npc": {
 					"character_id": "cashier_strict",
-					"name": "收银员王阿姨",
-					"role": "超市收银员",
-					"personality": "严厉、语气生硬"
+					"name": "店员阿姨",
+					"role": "超市店员",
+					"personality": "宽容、需要帮助"
 				},
-				"ai_prompt_friend": "小熊布布：阿姨在问你话呢，虽然阿姨声音有点大，但我们好好跟她解释就行啦。告诉她『我不小心碰到的，对不起』好不好？",
-				"ai_prompt_tool": "对方正在责问。请解释原因并再次致歉。",
-				"measure_point": "解释 + 二次致歉 + 情绪调节",
-				"expected_behavior": "平静解释原因，不逃避责任"
+				"ai_prompt_friend": "没关系，我知道你不是故意的。仓库里还有一个备用杯，但我的手被碎片划了一下，你能帮我去拿吗？钥匙在收银台。",
+				"ai_prompt_tool": "备用品位于仓库。工作人员手部受伤。请协助取物，钥匙位于收银台。",
+				"measure_point": "道歉与礼貌请求复合",
+				"expected_behavior": "在道歉后礼貌请求收银员提供钥匙"
 			},
 			{
 				"round": 3,
-				"title": "提出补救",
-				"description": "儿童需要提出赔偿或补救方案（如叫家长来处理）。",
+				"title": "收银台礼貌词验证",
+				"description": "收银员要求儿童说出今天学到的礼貌词才给钥匙。",
 				"npc": {
 					"character_id": "cashier_strict",
 					"name": "收银员王阿姨",
 					"role": "超市收银员",
 					"personality": "严厉但开始缓和"
 				},
-				"ai_prompt_friend": "小熊布布：现在我们要想想怎么弥补呀。你可以说『对不起，我可以叫妈妈来赔』或者『我会让爸爸妈妈来处理的』，试试看好不好？",
-				"ai_prompt_tool": "请提出赔偿或补救方案（如联系家长）。",
-				"measure_point": "复合请求 + 补偿提议",
-				"expected_behavior": "提出合理的补救方案并礼貌请求"
+				"ai_prompt_friend": "我可以给你钥匙，但你要说出今天学到的礼貌魔法词才行！快说一个吧。",
+				"ai_prompt_tool": "权限验证：请输出今日礼貌关键词，方可获取钥匙。",
+				"measure_point": "礼貌坚持性",
+				"expected_behavior": "重复使用请、谢谢或对不起等礼貌词"
 			},
 			{
 				"round": 4,
-				"title": "收银员缓和",
-				"description": "收银员态度缓和，接受补救方案，儿童需做最后道谢与告别。",
+				"title": "取回备用杯",
+				"description": "系统自动完成取杯动画，儿童做最后道谢与告别。",
 				"npc": {
 					"character_id": "cashier_strict",
 					"name": "收银员王阿姨",
 					"role": "超市收银员",
 					"personality": "态度已缓和"
 				},
-				"ai_prompt_friend": "小熊布布：阿姨原谅你啦！她说没关系了！别忘了跟阿姨说『谢谢您的原谅』，然后我们小心地离开好不好？下次一定要更小心呀！",
-				"ai_prompt_tool": "对方已接受补救。请道谢并告别。",
+				"ai_prompt_friend": "你帮我拿回来了！太感谢了！今天的冒险结束了，我们跟超市说拜拜吧。",
+				"ai_prompt_tool": "备用品已取回。全部任务已完成，数据已保存。请道谢并告别。",
 				"measure_point": "道谢 + 告别 + 反思承诺",
 				"expected_behavior": "道谢、告别并表达今后注意"
 			}

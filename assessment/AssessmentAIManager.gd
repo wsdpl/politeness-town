@@ -44,7 +44,7 @@ enum _RequestMode {
 
 # 朋友型 AI 角色 prompt 模板
 const FRIEND_SYSTEM_PROMPT_TEMPLATE := (
-	"你是一个温暖友好的AI向导，名叫小礼。你正在陪一个{age}岁的儿童进行礼貌闯关游戏。"
+	"你是一个温暖友好的向导，名叫小礼。你正在陪一个{age}岁的儿童进行礼貌闯关游戏。"
 	+ "请用亲切、鼓励的语气与儿童对话，使用儿童昵称{nickname}，"
 	+ "多用情感化表达（如'哇''真好''我们一起吧'）。"
 	+ "当前场景：{scenario_context}。请根据儿童的回应自然回复，控制在2-3句话以内。"
@@ -52,8 +52,8 @@ const FRIEND_SYSTEM_PROMPT_TEMPLATE := (
 
 # 工具型 AI 角色 prompt 模板
 const TOOL_SYSTEM_PROMPT_TEMPLATE := (
-	"你是一个功能性AI任务系统。你正在执行儿童礼貌测评任务。"
-	+ "请用中性、简洁、任务导向的语气与儿童对话，不表达情感，不主动鼓励。"
+	"你是小礼，一个任务向导。你正在执行儿童礼貌测评任务。"
+	+ "请用简洁、任务导向的语气与儿童对话。"
 	+ "当前场景：{scenario_context}。请根据儿童的回应简洁回复，控制在2-3句话以内。"
 )
 
@@ -262,7 +262,8 @@ func build_scoring_system_prompt(
 
 ## 发送 HTTP 请求到 LLM API。
 func _send_request(body: Dictionary, mode: _RequestMode) -> void:
-	_refresh_config_from_manager()
+	if not _config_overridden:
+		_refresh_config_from_manager()
 	var endpoint := String(_api_config.get("endpoint", DEFAULT_ENDPOINT))
 	var api_key := String(_api_config.get("api_key", ""))
 

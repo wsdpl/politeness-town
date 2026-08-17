@@ -20,6 +20,13 @@ var _iflytek_api_key_edit: LineEdit
 var _iflytek_api_secret_edit: LineEdit
 var _iflytek_save_button: Button
 
+# 豆包 TTS 配置控件
+var _doubao_provider_option: OptionButton
+var _doubao_endpoint_edit: LineEdit
+var _doubao_app_id_edit: LineEdit
+var _doubao_token_edit: LineEdit
+var _doubao_voice_edit: LineEdit
+
 @onready var _form_container: VBoxContainer = $CanvasLayer/FormCenter/FormContainer
 @onready var _endpoint_edit: LineEdit = $CanvasLayer/FormCenter/FormContainer/EndpointRow/EndpointEdit
 @onready var _api_key_edit: LineEdit = $CanvasLayer/FormCenter/FormContainer/ApiKeyRow/ApiKeyEdit
@@ -60,6 +67,7 @@ func _ready() -> void:
 
 	_load_existing_config()
 	_setup_iflytek_config()
+	_setup_doubao_config()
 
 
 # ============================================================
@@ -125,6 +133,125 @@ func _on_iflytek_save_pressed() -> void:
 		return
 	IFlytekSR.save_config(app_id, api_key, api_secret)
 	_update_test_result("讯飞API配置已保存，语音识别功能可用。", Color(0.2, 0.6, 0.2, 1))
+
+
+func _setup_doubao_config() -> void:
+	var form: VBoxContainer = _form_container
+	var sep := Label.new()
+	sep.text = "─── 豆包 TTS 语音播报 ───"
+	sep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sep.add_theme_font_size_override("font_size", 28)
+	sep.add_theme_color_override("font_color", Color(0.75, 0.3, 0.15))
+	form.add_child(sep)
+
+	var service: Node = get_node_or_null("/root/TTSService")
+	var config: Dictionary = service.get_config() if service else {}
+	_doubao_provider_option = OptionButton.new()
+	_doubao_provider_option.add_item("本机 TTS（不使用豆包）", 0)
+	_doubao_provider_option.add_item("豆包 TTS", 1)
+	_doubao_provider_option.select(1 if String(config.get("provider", "system")) == "doubao" else 0)
+	form.add_child(_create_doubao_option_row("播报提供商：", _doubao_provider_option))
+	_doubao_endpoint_edit = _create_doubao_row(form, "接口地址：", "https://openspeech.bytedance.com/api/v1/tts")
+	_doubao_app_id_edit = _create_doubao_row(form, "APP ID：", "火山引擎语音 APP ID")
+	_doubao_token_edit = _create_doubao_row(form, "Access Token：", "火山引擎 Access Token")
+	_doubao_token_edit.secret = true
+	_doubao_token_edit.secret_character = "•"
+	_doubao_voice_edit = _create_doubao_row(form, "默认音色：", "如 BV700_V2_streaming")
+	_doubao_endpoint_edit.text = String(config.get("endpoint", DoubaoTTS.DEFAULT_ENDPOINT))
+	_doubao_app_id_edit.text = String(config.get("app_id", ""))
+	_doubao_token_edit.text = String(config.get("access_token", ""))
+	_doubao_voice_edit.text = String(config.get("voice_type", DoubaoTTS.DEFAULT_VOICE))
+
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	var save := Button.new()
+	save.text = "保存豆包配置"
+	save.custom_minimum_size = Vector2(220, 50)
+	save.add_theme_font_size_override("font_size", 28)
+	save.pressed.connect(_on_doubao_save_pressed)
+	buttons.add_child(save)
+	var test := Button.new()
+	test.text = "试听豆包语音"
+	test.custom_minimum_size = Vector2(220, 50)
+	test.add_theme_font_size_override("font_size", 28)
+	test.pressed.connect(_on_doubao_test_pressed)
+	buttons.add_child(test)
+	form.add_child(buttons)
+	AssessmentUiTheme.apply_primary_button(save)
+	AssessmentUiTheme.apply_primary_button(test)
+
+
+func _create_doubao_option_row(label_text: String, option: OptionButton) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size = Vector2(180, 40)
+	label.add_theme_font_size_override("font_size", 28)
+	row.add_child(label)
+	option.custom_minimum_size = Vector2(400, 40)
+	option.add_theme_font_size_override("font_size", 28)
+	row.add_child(option)
+	return row
+
+
+func _create_doubao_row(parent: Node, label_text: String, placeholder: String) -> LineEdit:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size = Vector2(180, 40)
+	label.add_theme_font_size_override("font_size", 28)
+	row.add_child(label)
+	var edit := LineEdit.new()
+	edit.custom_minimum_size = Vector2(480, 40)
+	edit.placeholder_text = placeholder
+	edit.add_theme_font_size_override("font_size", 28)
+	row.add_child(edit)
+	parent.add_child(row)
+	return edit
+
+
+func _collect_doubao_config() -> Dictionary:
+	var service: Node = get_node_or_null("/root/TTSService")
+	var config: Dictionary = service.get_config() if service else {}
+	config["provider"] = "doubao" if _doubao_provider_option.selected == 1 else "system"
+	config["endpoint"] = _doubao_endpoint_edit.text.strip_edges()
+	config["app_id"] = _doubao_app_id_edit.text.strip_edges()
+	config["access_token"] = _doubao_token_edit.text.strip_edges()
+	config["voice_type"] = _doubao_voice_edit.text.strip_edges()
+	config["voice_narrator"] = config["voice_type"]
+	config["voice_child"] = config["voice_type"]
+	config["voice_female"] = config["voice_type"]
+	config["voice_male"] = config["voice_type"]
+	return config
+
+
+func _on_doubao_save_pressed() -> void:
+	var service: Node = get_node_or_null("/root/TTSService")
+	if service == null:
+		_update_test_result("豆包服务未初始化。", Color(0.8, 0.2, 0.2, 1))
+		return
+	var config := _collect_doubao_config()
+	if String(config.get("provider", "")) == "doubao" and (String(config.get("app_id", "")).is_empty() or String(config.get("access_token", "")).is_empty()):
+		_update_test_result("请填写豆包 APP ID 和 Access Token，或选择本机 TTS。", Color(0.8, 0.2, 0.2, 1))
+		return
+	service.set_config(config)
+	_update_test_result("豆包语音配置已保存。", Color(0.2, 0.6, 0.2, 1))
+
+
+func _on_doubao_test_pressed() -> void:
+	var service: Node = get_node_or_null("/root/TTSService")
+	if service == null:
+		_update_test_result("豆包服务未初始化。", Color(0.8, 0.2, 0.2, 1))
+		return
+	var config := _collect_doubao_config()
+	service.set_config(config)
+	if not service.is_configured():
+		_update_test_result("请先选择豆包并填写 APP ID、Access Token。", Color(0.8, 0.2, 0.2, 1))
+		return
+	_update_test_result("正在请求豆包语音……", Color(0.3, 0.4, 0.7, 1))
+	TTSHelper.speak("你好，这里是礼貌小镇的豆包语音测试。", TTSHelper.VoiceProfile.NARRATOR)
 
 
 ## 进入时从 AssessmentGameManager 加载已保存的 API 配置并回填表单。

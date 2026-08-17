@@ -36,6 +36,10 @@ var _warmup_baseline: Dictionary = {}
 var _current_scenario_index: int = 0
 var _total_stars: int = 0
 
+# 服务器API客户端
+var _server_api: Node
+const _ServerAPIScript = preload("res://assessment/ServerAPI.gd")
+
 # API 配置
 var _api_config: Dictionary = {
 	"endpoint": "https://api.deepseek.com/chat/completions",
@@ -49,6 +53,8 @@ static var _instance: AssessmentGameManager = null
 func _ready() -> void:
 	_instance = self
 	_load_api_config()
+	_server_api = _ServerAPIScript.new()
+	add_child(_server_api)
 
 static func get_instance() -> AssessmentGameManager:
 	return _instance
@@ -64,7 +70,7 @@ func register_child(info: Dictionary) -> void:
 		"has_language_disorder": bool(info.get("has_language_disorder", false)),
 		"device_usage_level": String(info.get("device_usage_level", "normal"))
 	}
-	_session_id = "session_%d" % Time.get_ticks_msec()
+	_session_id = "session_%d_%d" % [Time.get_unix_time_from_system(), Time.get_ticks_msec()]
 	_session_start_time = Time.get_ticks_msec()
 	_turns.clear()
 	_scenario_results.clear()
@@ -98,13 +104,27 @@ func start_sunshine_market() -> void:
 	section_completed.emit(AssessmentSection.POLITENESS_HOUSE)
 
 ## 记录交互轮次
-func record_turn(turn: Dictionary) -> void:
+func record_turn(turn: Dictionary) -> String:
+	var turn_id := "%s_turn_%04d" % [_session_id, _turns.size() + 1]
+	turn["turn_id"] = turn_id
 	turn["timestamp"] = Time.get_ticks_msec()
 	turn["session_id"] = _session_id
 	turn["section"] = _current_section
 	turn["scenario_index"] = _current_scenario_index
 	_turns.append(turn)
 	turn_recorded.emit(turn)
+	return turn_id
+
+## 按话轮ID回写异步评分，避免额外创建重复的“child_score”话轮。
+func update_turn(turn_id: String, patch: Dictionary) -> bool:
+	for index in range(_turns.size() - 1, -1, -1):
+		if String(_turns[index].get("turn_id", "")) != turn_id:
+			continue
+		for key in patch.keys():
+			_turns[index][key] = patch[key]
+		turn_recorded.emit(_turns[index])
+		return true
+	return false
 
 ## 记录场景结果
 func record_scenario_result(scenario_id: String, result: Dictionary) -> void:
@@ -123,8 +143,10 @@ func complete_assessment(final_results: Dictionary) -> void:
 	_current_section = AssessmentSection.RESULTS
 	section_completed.emit(AssessmentSection.SUNSHINE_MARKET)
 	session_completed.emit(final_results)
-	# 保存数据
+	# 保存到本地JSON
 	AssessmentStorage.save_session_results(_session_id, _child_info, _turns, _scenario_results, final_results)
+	# 上传到服务器数据库
+	_upload_to_server(final_results)
 
 ## 获取当前儿童信息
 func get_child_info() -> Dictionary:
@@ -216,3 +238,17 @@ func get_section_name() -> String:
 			return "结果"
 		_:
 			return "未知"
+
+## 上传测评数据到服务器数据库
+func _upload_to_server(final_results: Dictionary) -> void:
+	if not bool(ProjectSettings.get_setting("assessment/server_upload_enabled", false)):
+		print("[AssessmentGameManager] 远程上传已关闭，测评数据仅保存在本地")
+		return
+	var upload_data := {
+		"child_info": _child_info,
+		"turns": _turns,
+		"scenario_results": _scenario_results,
+		"final_results": final_results
+	}
+	_server_api.upload_session_complete(_child_info, _turns, _scenario_results, final_results)
+	print("[AssessmentGameManager] 测评数据已发送至服务器 (%d 话轮, %d 场景)" % [_turns.size(), _scenario_results.size()])

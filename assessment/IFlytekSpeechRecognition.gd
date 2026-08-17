@@ -492,16 +492,7 @@ func _process_vad(delta: float) -> void:
 	else:
 		_vad_silence_time += delta
 
-	var auto_stop := false
-	if _vad_has_speech and _vad_total_time > VAD_MIN_RECORD_SECONDS and _vad_silence_time >= VAD_SILENCE_STOP_SECONDS:
-		auto_stop = true
-	elif not _vad_has_speech and _vad_total_time >= VAD_NO_SPEECH_TIMEOUT:
-		auto_stop = true
-
-	if auto_stop and not _vad_auto_stopped:
-		_vad_auto_stopped = true
-		status_message.emit("检测到说话结束，正在识别…")
-		stop_and_recognize()
+	# VAD 自动停止已禁用：录音仅在用户手动按下停止按钮时结束
 
 
 # ========== 音频处理 ==========

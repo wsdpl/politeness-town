@@ -127,12 +127,15 @@ static func export_report(session_id: String) -> Dictionary:
 	}
 	_ensure_dirs()
 	var report_path := "%s/%s.json" % [REPORTS_DIR, _sanitize_filename(session_id)]
+	var html_path := "%s/%s.html" % [REPORTS_DIR, _sanitize_filename(session_id)]
+	report["export_files"] = {"json": report_path, "html": html_path}
 	var file := FileAccess.open(report_path, FileAccess.WRITE)
 	if file:
 		file.store_string(JSON.stringify(report, "\t"))
 		file.close()
 	else:
 		push_error("[AssessmentStorage] 无法写入报告文件: %s (错误码: %d)" % [report_path, FileAccess.get_open_error()])
+	_write_html_report(report, html_path)
 	return report
 
 
@@ -247,6 +250,8 @@ static func export_csv(session_id: String) -> String:
 			lines.append("互动时长(分钟),%.4f" % float(stats.get("duration_minutes", 0.0)))
 			lines.append("话轮数,%d" % int(stats.get("turn_count", 0)))
 
+	# UTF-8 BOM 确保 Windows Excel 直接打开时中文不乱码。
+	file.store_buffer(PackedByteArray([0xEF, 0xBB, 0xBF]))
 	file.store_string("\r\n".join(lines))
 	file.close()
 	print("[AssessmentStorage] CSV已导出: %s" % csv_path)
@@ -258,6 +263,56 @@ static func _csv_escape(value: String) -> String:
 	if value.find(",") != -1 or value.find("\"") != -1 or value.find("\n") != -1 or value.find("\r") != -1:
 		return "\"%s\"" % value.replace("\"", "\"\"")
 	return value
+
+
+## 生成自包含、可用浏览器打印为PDF的中文报告。
+static func _write_html_report(report: Dictionary, html_path: String) -> bool:
+	var final_results: Dictionary = report.get("final_results", {})
+	var child_info: Dictionary = report.get("child_info", {})
+	var rows: Array[String] = []
+	for entry in final_results.get("per_dimension", []):
+		if entry is Dictionary:
+			rows.append("<tr><td>%s</td><td>%.2f</td><td>%.2f</td><td>%s</td></tr>" % [
+				_html_escape(String(entry.get("name", ""))),
+				float(entry.get("frequency", 0.0)),
+				float(entry.get("level", 0.0)),
+				"★" if int(entry.get("star", 0)) > 0 else "-",
+			])
+	var html := """<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>礼貌小镇测评报告</title>
+<style>
+body{font-family:"Microsoft YaHei",sans-serif;color:#2f251f;max-width:960px;margin:32px auto;padding:0 24px;line-height:1.6}
+h1{border-bottom:3px solid #d69a3a;padding-bottom:12px}h2{margin-top:28px;color:#70451f}
+.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;background:#fff7e7;padding:18px;border:1px solid #e8c987}
+table{width:100%%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #cdbb9e;padding:10px;text-align:left}th{background:#f3dfb5}
+.score{font-size:24px;font-weight:700;color:#a65320}.notice{margin-top:32px;padding:12px;border-left:4px solid #b85b4b;background:#fff2ef}
+@media print{body{margin:0;max-width:none}.notice{break-inside:avoid}}
+</style></head><body>
+<h1>礼貌小镇 · 儿童礼貌语言能力报告</h1>
+<div class="meta"><div>昵称：%s</div><div>年龄：%d岁</div><div>AI类型：%s</div><div>会话ID：%s</div></div>
+<h2>总体结果</h2><p class="score">总分 %.2f / 5.00 &nbsp; · &nbsp; 星章 %d / %d</p><p>有效儿童话轮：%d</p>
+<h2>六大核心维度</h2><table><thead><tr><th>维度</th><th>每分钟标记词频次</th><th>平均策略等级</th><th>星章</th></tr></thead><tbody>%s</tbody></table>
+<h2>评估建议</h2><p>%s</p>
+<div class="notice">本报告用于教育研究与礼貌语言发展参考，不作为医疗诊断或心理障碍诊断依据。建议结合家长、教师的日常观察综合解读。</div>
+</body></html>""" % [
+		_html_escape(String(child_info.get("nickname", ""))), int(child_info.get("age", 0)),
+		_html_escape(String(child_info.get("ai_type", ""))), _html_escape(String(report.get("session_id", ""))),
+		float(final_results.get("overall_score", final_results.get("total_score", 0.0))),
+		int(final_results.get("total_stars", 0)), int(final_results.get("max_stars", 6)),
+		int(final_results.get("turn_count", report.get("turns", []).size())), "".join(rows),
+		_html_escape(String(final_results.get("recommendation", ""))),
+	]
+	var file := FileAccess.open(html_path, FileAccess.WRITE)
+	if file == null:
+		push_error("[AssessmentStorage] 无法写入HTML报告: %s" % html_path)
+		return false
+	file.store_string(html)
+	file.close()
+	return true
+
+
+static func _html_escape(value: String) -> String:
+	return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
 
 
 # ============================================================

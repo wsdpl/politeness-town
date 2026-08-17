@@ -61,6 +61,8 @@
 2. 用 Godot 编辑器打开本项目
 3. 运行项目（F5）
 
+已导出的 Windows 发布版位于 `build/礼貌小镇_v1.1.0.exe`。完整的功能完成度、测试方法和研究上线门禁见 `PROJECT_AUDIT.md`。
+
 ## API 配置
 
 在游戏内的"API设置"页面配置：
@@ -68,6 +70,8 @@
 - **讯飞 APP_ID / API_KEY / API_SECRET** — 用于语音识别
 
 未配置API时游戏可正常运行，AI评分会自动跳过。
+
+正式测量在未配置 DeepSeek 时使用本地规则评分；配置后将 DeepSeek 作为可选语义复核。儿童数据会始终保存到本地，并在 `assessment/server_upload_enabled=true` 时上传到配置的服务器数据库。
 
 ## 许可证
 

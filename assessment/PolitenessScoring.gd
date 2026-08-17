@@ -15,7 +15,7 @@ enum Level {
 
 # ===== 礼貌标记词库（六大维度） =====
 const MARKER_LIBRARY := {
-	"greeting": ["你好", "嗨", "早上好", "再见", "拜拜"],          # 问候类
+	"greeting": ["你好", "嗨", "早上好", "下午好"],                  # 问候类
 	"request": ["请", "可以吗", "能不能", "好吗", "拜托"],          # 请求类
 	"thanks": ["谢谢", "多谢", "感谢"],                            # 道谢类
 	"apology": ["对不起", "抱歉", "不好意思"],                     # 道歉类
@@ -153,7 +153,7 @@ static func calculate_frequency(turns: Array, dimension: String) -> float:
 	var dim_key := _resolve_dimension(dimension)
 	var marker_count := 0
 	for turn in turns:
-		if turn is Dictionary:
+		if turn is Dictionary and _is_child_turn(turn):
 			marker_count += _count_markers_in_dimension(_extract_text(turn), dim_key)
 	var minutes := _calculate_duration_minutes(turns)
 	if minutes <= 0.0:
@@ -170,9 +170,11 @@ static func calculate_average_level(turns: Array, dimension: String) -> float:
 	var total := 0.0
 	var count := 0
 	for turn in turns:
-		if turn is Dictionary:
-			var result := score_response(_extract_text(turn), dimension)
-			total += float(result["level"])
+		if turn is Dictionary and _is_child_turn(turn):
+			var level := int(turn.get("level", 0))
+			if level < Level.SILENT or level > Level.COMPOSITE:
+				level = int(score_response(_extract_text(turn), dimension)["level"])
+			total += float(level)
 			count += 1
 	if count == 0:
 		return 0.0
@@ -188,7 +190,19 @@ static func calculate_contextual_adaptation(turns: Array) -> Dictionary:
 	var total := 0
 	var per_dimension: Dictionary = {}
 	for turn in turns:
-		if not (turn is Dictionary):
+		if not (turn is Dictionary) or not _is_child_turn(turn):
+			continue
+		if turn.has("level_fit"):
+			var fit := bool(turn.get("level_fit", false))
+			var social_context := String(turn.get("social_distance", turn.get("expected_dimension", "context")))
+			total += 1
+			if fit:
+				correct += 1
+			if not per_dimension.has(social_context):
+				per_dimension[social_context] = {"correct": 0, "total": 0}
+			per_dimension[social_context]["total"] = int(per_dimension[social_context]["total"]) + 1
+			if fit:
+				per_dimension[social_context]["correct"] = int(per_dimension[social_context]["correct"]) + 1
 			continue
 		var expected_dim := String(turn.get("expected_dimension", turn.get("context", turn.get("scenario_dimension", ""))))
 		if expected_dim.is_empty():
@@ -227,7 +241,10 @@ static func calculate_contextual_adaptation(turns: Array) -> Dictionary:
 ## [param turns] 该场景下所有儿童发言轮次（Dictionary 数组，需含 text/level/timestamp 等字段）
 ## 返回包含全部统计指标的字典
 static func calculate_scenario_statistics(turns: Array) -> Dictionary:
-	var turn_count := turns.size()
+	var turn_count := 0
+	for turn in turns:
+		if turn is Dictionary and _is_child_turn(turn):
+			turn_count += 1
 	var duration_minutes := _calculate_duration_minutes(turns)
 
 	# 礼貌标记词总频次与各维度分项频次
@@ -236,7 +253,7 @@ static func calculate_scenario_statistics(turns: Array) -> Dictionary:
 	for dim in MARKER_LIBRARY.keys():
 		var dim_count := 0
 		for turn in turns:
-			if turn is Dictionary:
+			if turn is Dictionary and _is_child_turn(turn):
 				dim_count += _count_markers_in_dimension(_extract_text(turn), dim)
 		marker_type_counts[dim] = dim_count
 		marker_total_count += dim_count
@@ -251,7 +268,7 @@ static func calculate_scenario_statistics(turns: Array) -> Dictionary:
 	var level_sum := 0.0
 	var scored_count := 0
 	for turn in turns:
-		if not (turn is Dictionary):
+		if not (turn is Dictionary) or not _is_child_turn(turn):
 			continue
 		var level: int = int(turn.get("level", 0))
 		if level > 0:
@@ -300,9 +317,11 @@ static func calculate_stability(turns: Array) -> float:
 		return 0.0
 	var levels: Array = []
 	for turn in turns:
-		if turn is Dictionary:
-			var result := score_response(_extract_text(turn), "greeting")
-			levels.append(float(result["level"]))
+		if turn is Dictionary and _is_child_turn(turn):
+			var level := int(turn.get("level", 0))
+			if level < Level.SILENT or level > Level.COMPOSITE:
+				level = int(score_response(_extract_text(turn), "greeting")["level"])
+			levels.append(float(level))
 	if levels.size() < 2:
 		return 0.0
 	var mean := 0.0
@@ -393,11 +412,16 @@ static func _count_markers_in_dimension(text: String, dimension: String) -> int:
 		return 0
 	var count := 0
 	for marker in MARKER_LIBRARY[dimension]:
-		var idx := text.find(marker)
-		while idx != -1:
+		# 同一话轮内的同一标记词只计1次，避免口吃/重复造成频次膨胀。
+		if text.find(marker) != -1:
 			count += 1
-			idx = text.find(marker, idx + marker.length())
 	return count
+
+
+## 统计时排除AI台词和旧版评分记录；无speaker的场景内本地话轮视为儿童话轮。
+static func _is_child_turn(turn: Dictionary) -> bool:
+	var speaker := String(turn.get("speaker", ""))
+	return speaker.is_empty() or speaker == "child"
 
 
 ## 找出文本命中的所有维度。
@@ -418,10 +442,14 @@ static func _calculate_duration_minutes(turns: Array) -> float:
 		return 0.0
 	var timestamps: Array = []
 	for turn in turns:
-		if turn is Dictionary and turn.has("timestamp"):
+		if turn is Dictionary and _is_child_turn(turn) and turn.has("timestamp"):
 			timestamps.append(int(turn["timestamp"]))
 	if timestamps.size() < 2:
-		return float(turns.size()) * DEFAULT_TURN_MINUTES
+		var child_count := 0
+		for turn in turns:
+			if turn is Dictionary and _is_child_turn(turn):
+				child_count += 1
+		return float(child_count) * DEFAULT_TURN_MINUTES
 	var min_ts := int(timestamps[0])
 	var max_ts := int(timestamps[0])
 	for ts in timestamps:
@@ -464,7 +492,7 @@ static func _calculate_strategy_flexibility(turns: Array) -> float:
 		return 0.0
 	var used_groups: Dictionary = {}
 	for turn in turns:
-		if not (turn is Dictionary):
+		if not (turn is Dictionary) or not _is_child_turn(turn):
 			continue
 		for dim in _find_marker_dimensions(_extract_text(turn)):
 			used_groups[FUNCTIONAL_GROUPS.get(dim, dim)] = true
@@ -487,7 +515,7 @@ static func _calculate_flexibility_level(turns: Array) -> float:
 		return 0.0
 	var used_groups: Dictionary = {}
 	for turn in turns:
-		if not (turn is Dictionary):
+		if not (turn is Dictionary) or not _is_child_turn(turn):
 			continue
 		for dim in _find_marker_dimensions(_extract_text(turn)):
 			used_groups[FUNCTIONAL_GROUPS.get(dim, dim)] = true
@@ -505,7 +533,7 @@ static func _calculate_stress_level(scenario_results: Dictionary, turns: Array) 
 static func _collect_pressure_turns(turns: Array) -> Array:
 	var pressure_turns: Array = []
 	for turn in turns:
-		if turn is Dictionary:
+		if turn is Dictionary and _is_child_turn(turn):
 			var pressure = turn.get("is_pressure", turn.get("pressure", turn.get("high_pressure", false)))
 			if bool(pressure):
 				pressure_turns.append(turn)
